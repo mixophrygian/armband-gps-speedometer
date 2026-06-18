@@ -1,0 +1,3 @@
+adafruit_gps
+adafruit_ht16k33
+neopixel
