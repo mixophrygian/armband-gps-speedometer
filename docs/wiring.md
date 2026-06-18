@@ -22,7 +22,8 @@ Armband, semi-permanent LED
 > the connector that earlier plans used (to unplug the pod for charging) was
 > dropped: fewer parts, fewer joints, and no non-locking connector to pop apart
 > on a kid's arm. The trade-off is that pod and armband are now one captive unit
-> — separating them later means desoldering. See `enclosure.md` (DRAFT).
+> — separating them later means desoldering. See `3d-printing-guide.md` for the
+> documented 3D-printed pod.
 
 This v2 is a **single 10-pixel lane** — the armband only has room for about 10
 pixels at 60 LED/m. That removes the serpentine wiring and the lane-to-lane data
@@ -106,7 +107,7 @@ out of the pod to the lane.
 > Trade-off you've accepted: with no connector, pod and armband are one captive
 > unit. To separate them for service you desolder at the perma-proto. Leave a
 > little extra cable length (service slack) so the pod can open and the lid lift
-> without tugging the lane's solder joints — see `enclosure.md`.
+> without tugging the lane's solder joints — see `3d-printing-guide.md`.
 
 Strain relief still matters, just at different points: clamp the cable where it
 exits the pod (grommet) and immobilize it at the lane end so arm motion flexes

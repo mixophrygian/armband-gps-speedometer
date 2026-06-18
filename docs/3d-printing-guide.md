@@ -46,7 +46,7 @@ The box is **~69 × 61 × 41 mm** (plus two small screw ears on the ends). It's
 is **battery → perma-proto → Feather → display**, with the battery flat on the
 floor. That keeps the heaviest part lowest (low centre of gravity on your arm).
 Reaching ~41 mm tall assumes you **trim the stacking-header tails** after wiring
-and **trim the perma-proto** to a small hub (the full quarter board is too wide).
+and **trim the half-size perma-proto** to a small hub.
 
 Two things to know:
 
@@ -70,7 +70,7 @@ Open the file and read top to bottom — it's commented for exactly this. The
 structure:
 
 - **`MEASURED PARTS`** — real-world sizes (Feather, display, GPS antenna,
-  battery). These came from your `docs/bom.md` and `docs/enclosure.md`. Several
+  battery). These came from the documented parts in `docs/bom.md`. Several
   are marked **`(VERIFY)`** — those are the ones I'm least sure of and you must
   confirm with calipers.
 - **`ENCLOSURE SHELL`** — cavity size and wall thicknesses. The cavity
@@ -86,18 +86,19 @@ out of the cavity, bump `inner_w`. That feedback loop is the entire skill.
 
 ### Check the fit without printing
 
-`cad/verify_fit.py` mirrors the same numbers and (a) prints whether every part
-fits inside the cavity with no overlaps, and (b) draws the top-view plan
-(`cad/enclosure_plan.png`). Run it after you change dimensions:
+`cad/verify_fit.py` is an optional sanity check that mirrors the same numbers
+and redraws the top-view plan (`cad/enclosure_plan.png`). Run it after you
+change dimensions if you want a quick text/plan check before printing:
 
 ```
 python3 cad/verify_fit.py
 ```
 
 It already caught two layout bugs while I was setting this up (the GPS was
-clipping the wall and overlapping the display stack). Treat a clean run as your
-"safe to print" gate. If you change a number in the `.scad`, change the matching
-one at the top of `verify_fit.py` and re-run.
+clipping the wall and overlapping the display stack). The printed parts and
+actual dry-fit are still the real gate. If you change a number in the `.scad`,
+update the matching value at the top of `verify_fit.py` before relying on its
+output.
 
 ### Export the STL
 
@@ -124,13 +125,14 @@ haven't dry-fit yet. Sequence:
    window lines up with the display face and the GPS antenna pokes through its
    hole. Adjust `stack_x/stack_y` and `gps_x/gps_y` if not.
 4. **Now set `mount_features = true`**, tune the mount positions to your dry-fit,
-   re-run `verify_fit.py`, and reprint the lid. The base rarely needs a reprint.
+   optionally re-run `verify_fit.py`, and reprint the lid. The base rarely needs
+   a reprint.
 
 This is the difference between "print once, glue everything, done in an evening"
 (totally fine — you said so) and "print, dry-fit, refine." Start with #1
 regardless; it's your real first print and a throwaway is cheap insurance.
 
-A zero-cost version of the dry-fit: print the plan (`enclosure_plan.png`) at
+A zero-cost version of the dry-fit: print the plan (`cad/enclosure_plan.png`) at
 100% scale on paper, lay your parts on it, and check before you print anything.
 
 ---
@@ -204,12 +206,11 @@ You don't control the machine, so make the files universal and carry a cheat-she
 
 ### Before you leave the house
 
-1. **Plug in your measured numbers and re-run the check.** Open `enclosure.scad`,
+1. **Plug in your measured numbers and optionally re-run the check.** Open `enclosure.scad`,
    set the `MEASURE`/`VERIFY` values to your real calipered numbers — at minimum
    `stack_hang`, `stack_envelope` (the assembled display→Feather→tail-tips drop),
-   `gps_ant_l/w`, and the switch body height. Run `python3 cad/verify_fit.py` and
-   don't export until it prints `PROBLEMS: none`. This is the gate — a wrong
-   number here is a wasted print on a machine you may only get to once.
+   `gps_ant_l/w`, and the switch body height. `python3 cad/verify_fit.py` can
+   catch obvious layout mistakes, but dry-fitting the real boards is the gate.
 2. **Export three STLs.** In OpenSCAD set `part` to each of `base`, `lid_print`,
    and `baseplate`; press **F6**, then **File → Export → Export as STL**.
    - Leave `mount_features = false` for this first round (plain box).

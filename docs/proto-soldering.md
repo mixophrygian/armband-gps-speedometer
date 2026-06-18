@@ -30,7 +30,7 @@ build the rails yourself.)
 | Part | On the breadboard now | After this doc |
 | --- | --- | --- |
 | Feather + display stack | tails in breadboard | tails soldered into the perma-proto |
-| 330 ohm resistor | breadboard | soldered to the perma-proto |
+| 470 ohm resistor | breadboard | soldered to the perma-proto |
 | DPDT switch | jumpers to breadboard | long wires soldered to the perma-proto |
 | LED lane | jumpers to breadboard | hardwired 3-conductor cable soldered to the perma-proto |
 | GPS (PA1010D) | STEMMA QT plug | **unchanged — stays a plug into the Feather** |
@@ -47,7 +47,7 @@ connectors and stay fully detachable, so the GPS can live outside the box.
    directly into the perma-proto rows.** If you want it removable, solder female
    headers in and plug the Feather into those instead — but that adds ~8 mm of
    height, tight in the pod. This doc assumes direct solder.
-3. You are using the **330 ohm** data resistor confirmed in `bom.md`.
+3. You are using the **470 ohm** data resistor from `bom.md`.
 
 ## Tools and materials
 
@@ -90,7 +90,7 @@ you; the final test checks against it.
 Switch lugs left **empty**: pole 1 ON-throw and pole 2 OFF-throw.
 
 ```text
- row D6   : Feather D6  ===[ 330R ]=== row DATA --> LED cable data --> lane DIN
+ row D6   : Feather D6  ===[ 470R ]=== row DATA --> LED cable data --> lane DIN
  row EN   : Feather EN  ------------------------- switch pole1 COMMON
  row BAT  : Feather BAT ------------------------- switch pole2 ON
  row LEDV : switch pole2 COMMON --+--- LED cable + --> lane +
@@ -183,7 +183,7 @@ Success: three wires run board->lane; lane joints insulated and strain-relieved.
 Multimeter on continuity. LiPo and USB disconnected. Check every node connects
 and nothing shorts:
 
-- D6 -> resistor -> DATA -> LED data wire: ~330 ohm end to end (not a beep).
+- D6 -> resistor -> DATA -> LED data wire: ~470 ohm end to end (not a beep).
 - Feather GND -> `-` rail -> switch pole-1 OFF-throw -> LED GND wire: all beep.
 - Feather BAT -> switch pole-2 ON-throw: beep.
 - Feather EN -> switch pole-1 common: beep.

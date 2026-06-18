@@ -11,14 +11,14 @@ other vendors work unless a note says otherwise.
 | 1 | [Adafruit Feather RP2040, PID 4884](https://www.adafruit.com/product/4884) | Main controller, USB-C, built-in LiPo charger, STEMMA QT. |
 | 1 | [Adafruit Mini GPS PA1010D STEMMA QT, PID 4415](https://www.adafruit.com/product/4415) | Mount antenna facing skyward, not under the display/battery. |
 | 1 | [Adafruit 0.56" 4-Digit 7-Segment FeatherWing, PID 3108 (red) or 3110 (yellow)](https://www.adafruit.com/product/3108) | Yellow (3110) is a bit more readable in bright daylight; red (3108) is fine indoors/dusk. Either works. |
-| 1 | [Adafruit Lithium Ion Battery 3.7V 2000mAh, PID 2011](https://www.adafruit.com/product/2011) | Adafruit-standard JST-PH polarity — plugs straight into the Feather, no re-pinning. Built-in protection circuit. 60 x 36 x 7 mm. The smaller 1200mAh PID 258 also works if you want a lighter pack. **Verify connector polarity against the Feather silkscreen before plugging in — some third-party packs ship reverse-wired (see bench-bringup.md Stage 6).** |
+| 1 | [Adafruit Lithium Ion Battery 3.7V 2000mAh, PID 2011](https://www.adafruit.com/product/2011) | Documented battery for this build and the 3D-printed enclosure. Adafruit-standard JST-PH polarity, built-in protection circuit, 60 x 36 x 7 mm. **Still verify connector polarity against the Feather silkscreen before first power (see bench-bringup.md Stage 6).** |
 | 1 | [STEMMA QT / Qwiic JST-SH 4-pin I2C cable](https://www.adafruit.com/product/4399) | Connects the GPS to the Feather. |
 
 ## LED Lane
 
 | Qty | Item | Notes |
 | --- | --- | --- |
-| 1m | BTF-LIGHTING WS2812B Pure Gold Wire LED Strip, 60 LED/m, IP65, black PCB (Amazon) | The build uses 10 pixels (1 lane); 1m (60 px) is plenty and leaves practice/splice scraps. Buy 2m if you want generous practice material. WS2812B = standard NeoPixel chip; Pure Gold Wire = premium bond-wire variant (more reliable than the ECO line) for a wearable that takes abuse. See [LED Strip Details](#led-strip-details) below. |
+| 1 m | BTF-LIGHTING WS2812B Pure Gold Wire LED Strip, 60 LED/m, IP65, black PCB (Amazon) | The build uses 10 pixels (1 lane); 1 m (60 px) is plenty and leaves practice/splice scraps. WS2812B = standard NeoPixel chip; Pure Gold Wire = premium bond-wire variant (more reliable than the ECO line) for a wearable that takes abuse. See [LED Strip Details](#led-strip-details) below. |
 
 ## Headers & Power Conditioning
 
@@ -45,7 +45,7 @@ other vendors work unless a note says otherwise.
 | Qty | Item | Notes |
 | --- | --- | --- |
 | 1 | Armband | Any wearable band; the LED lane is semi-permanently attached to it. |
-| 1 | Pod/enclosure | Print the parametric enclosure in `cad/` (see `3d-printing-guide.md`), or use a hand-built ABS project box ~100 x 60 x 45 mm with a screw-down lid (search "ABS project box 100x60x45"). |
+| 1 | 3D-printed pod/enclosure | Print the parametric enclosure in `cad/` using `docs/3d-printing-guide.md`. |
 | Several | Velcro/hook-and-loop patches | Attach the pod to the armband. |
 | Several | Flexible fabric/foam backing strips | Prevent sharp bends at LED solder joints. |
 | Several | Cable tie points, thread, or adhesive | Strain relief at the pod-to-lane cable and LED lane ends. |
@@ -109,5 +109,5 @@ what you cut.
 - USB-C cable is data-capable, not charge-only?
 - Strain relief plan exists for the hardwired pod-to-lane cable (grommet clamp + service slack)?
 - 470 ohm resistor and 100 uF cap for NeoPixel data and power?
-- Enough heat shrink for all LED-lane solder joints plus connector joints?
+- Enough heat shrink for all LED-lane and cable solder joints?
 - Way to see the Feather charge LED after the pod is assembled?

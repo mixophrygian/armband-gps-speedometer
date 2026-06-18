@@ -14,7 +14,7 @@
 ## Intentional State Tests
 
 - No GPS fix: cover/start indoors and confirm amber wave + `----`.
-- Normal running/walking: go outdoors and confirm numeric mph + speed-correlated wave.
+- Normal running/walking: go outdoors and confirm numeric mph + fixed-rate rainbow wave.
 - GPS stale/lost: block GPS sky view after a fix and confirm yellow pulse + `----`.
 - Caught code error: temporarily raise an exception after setup and confirm red flashing + `Err`.
 

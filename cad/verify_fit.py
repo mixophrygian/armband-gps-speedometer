@@ -4,6 +4,7 @@ Run: python3 cad/verify_fit.py
 This rev: Feather/display CENTRED on the proto (~+7,-1); switch points UP through
 the LID; GPS sits ON TOP of the lid (only a STEMMA cable hole passes through)."""
 import matplotlib; matplotlib.use("Agg")
+from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Circle, FancyBboxPatch
 
@@ -36,7 +37,13 @@ def inside(c, clr=0.5):
 
 problems, notes, info = [], [], []
 v = inner_h - stack_envelope - proto_below - batt_h
-(notes if v>=2 else problems).append(f"Vertical clearance battery->proto = {v:.1f}mm (assumes trimmed tails)")
+clearance_note = f"Vertical clearance battery->proto = {v:.1f}mm (assumes trimmed tails)"
+if v < 0:
+    problems.append(clearance_note)
+elif v < 2:
+    notes.append(clearance_note + " - tight; dry-fit before final assembly")
+else:
+    notes.append(clearance_note)
 for c,n in [(proto,"proto"),(stack,"display/Feather"),(batt,"battery")]:
     ok,b = inside(c)
     (notes if ok else problems).append(f"{n} {'fits' if ok else 'OUT OF BOUNDS'} (x {b[0]:.1f}..{b[1]:.1f}, y {b[2]:.1f}..{b[3]:.1f})")
@@ -99,4 +106,5 @@ axs.add_patch(Rectangle((stack[0]-25.5,fz),51,1.6,facecolor="#888",edgecolor="k"
 axs.add_patch(Rectangle((-outer_l/2-1.5,usb_z-3),3,6,facecolor="none",edgecolor="#b00",lw=2)); axs.annotate(f"USB z={usb_z:.0f}",xy=(-outer_l/2-4,usb_z),fontsize=7,color="#b00",va="center",ha="right")
 axs.set_xlim(-outer_l/2-22,outer_l/2+8); axs.set_ylim(-3,top+lid_th+6)
 axs.set_title(f"Side elevation — height {floor+inner_h+lid_th:.0f} mm",fontsize=9.5); axs.axis("off")
-plt.tight_layout(); plt.savefig("enclosure_plan.png",dpi=130,bbox_inches="tight"); print("\nSaved enclosure_plan.png")
+out = Path(__file__).with_name("enclosure_plan.png")
+plt.tight_layout(); plt.savefig(out,dpi=130,bbox_inches="tight"); print(f"\nSaved {out}")

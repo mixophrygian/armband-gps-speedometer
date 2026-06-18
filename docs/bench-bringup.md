@@ -24,7 +24,7 @@ again.
     `Ctrl-A` then `K` then `y`. If a port is stuck/busy, run `pkill screen`.
     The exact device name may differ; list ports with `ls /dev/cu.usbmodem*`.
 - Soldering iron, solder, flush cutters, and something to hold headers straight
-- Later stages: NeoPixel strip (BTF-LIGHTING WS2812B Pure Gold Wire, 60 LED/m, IP65 — 1 m is plenty), 470 ohm resistor, 100uF capacitor (see wiring.md for why 100uF instead of the usual 1000uF), 26-30 AWG silicone wire for the hardwired pod-to-lane cable (v2 has no pod-to-armband connector), LiPo (Adafruit 2000 mAh PID 2011, standard polarity), and DPDT switch
+- Later stages: NeoPixel strip (BTF-LIGHTING WS2812B Pure Gold Wire, 60 LED/m, IP65 — 1 m is plenty), 470 ohm resistor, 100uF capacitor (see wiring.md for why 100uF instead of the usual 1000uF), 26-30 AWG silicone wire for the hardwired pod-to-lane cable (v2 has no pod-to-armband connector), LiPo (Adafruit 2000 mAh PID 2011, standard polarity), and a 6mm-bushing DPDT toggle switch
 - Multimeter — required at Stage 6 for battery polarity verification; also useful throughout for continuity and short checks
 
 ## Stage 1: Feather Alone
@@ -165,12 +165,11 @@ If it fails:
 
 Do this before the LEDs, while the current draw is still small.
 
-The battery for this build is a third-party 3.7V 1200mAh 103040 LiPo with a
-PH2.0mm JST connector. **The connector fits the Feather either way, but
-third-party JST-PH batteries are very often wired with polarity opposite from
-Adafruit's standard.** Plugging in a reversed-polarity battery will damage the
-Feather's charger IC, the battery, or both. This is the most common way people
-kill Feathers. Do not skip the polarity check.
+The battery for this build is the Adafruit 3.7V 2000mAh LiPo, PID 2011. It uses
+Adafruit-standard JST-PH polarity and should plug straight into the Feather, but
+do the polarity check anyway before first power. Plugging in a reversed-polarity
+battery will damage the Feather's charger IC, the battery, or both. This is the
+most common way people kill Feathers. Do not skip the check.
 
 1. Unplug USB.
 2. Verify the battery polarity before plugging it into the Feather:
@@ -282,6 +281,6 @@ After every staged test passes:
    - Display shows `----` while waiting for GPS.
    - LEDs show an amber no-fix wave.
 4. Take the setup outdoors.
-5. Confirm GPS fix and whole-number mph display.
+5. Confirm GPS fix and mph display.
 
 Do not put the boards in the pod until this stage works on the bench.

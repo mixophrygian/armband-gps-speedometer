@@ -25,12 +25,11 @@ breadboard in the wearable.
   battery, and LED bring-up instructions.
 - `docs/wiring.md` - electrical wiring, LED lane, and charging switch.
 - `docs/assembly-checklist.md` - build phases from bench to final armband.
-- `docs/enclosure.md` - hand-built project-box pod: size, layout, and cut list.
-- `docs/3d-printing-guide.md` - zero-to-printed walkthrough for the 3D-printed
-  enclosure (OpenSCAD, slicing for Bambu/Prusa, PETG, print order).
+- `docs/3d-printing-guide.md` - primary enclosure walkthrough for the
+  3D-printed pod (OpenSCAD, slicing for Bambu/Prusa, PETG, print order).
 - `cad/enclosure.scad` - parametric 3D-printable enclosure (compact, battery
   under the stack for low CoG; ~69 x 61 x 41 mm).
-- `cad/verify_fit.py` - checks the enclosure params fit and draws the plan view.
+- `cad/verify_fit.py` - optional CAD sanity check that redraws the plan view.
 - `docs/test-plan.md` - bench and field acceptance tests.
 
 ## Firmware Defaults
@@ -64,7 +63,6 @@ Quick install summary:
 
 The firmware is designed to be useful during bring-up: it shows `8888` and a
 blue sweep on boot, `----` plus an amber wave while waiting for GPS, speed
-(2-decimal mph) plus a red speed-correlated comet down the lane once GPS data is
-available, a
+(2-decimal mph) plus a fixed-rate rainbow comet once GPS data is available, a
 yellow pulse plus `----` if a fix goes stale/lost, and `Err` plus red flashing
 for caught application errors after hardware setup.

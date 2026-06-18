@@ -3,11 +3,11 @@
 ## 1. Pre-Purchase Check
 
 - [ ] All core boards are in the cart: Feather RP2040, PA1010D GPS, 7-segment FeatherWing.
-- [ ] NeoPixel strip quantity is 2 m, even though only ~10 pixels (~167 mm) are used in v2.
+- [ ] NeoPixel strip quantity is 1 m; the build only uses ~10 pixels (~167 mm).
 - [ ] LiPo is Adafruit-compatible JST-PH polarity.
 - [ ] STEMMA QT cable is present for the GPS.
 - [ ] 26-30 AWG silicone wire (red/black/data color) for the hardwired pod-to-lane cable is present. (v2 uses no pod-to-armband connector; the JST-PH 6-pin pairs are spares.)
-- [ ] DPDT slide switch is present.
+- [ ] 6mm-bushing DPDT toggle switch is present.
 - [ ] Resistor, capacitor, silicone wire, heat shrink, Velcro, foam, and USB-C cable are present.
 
 ## 2. Bench Bring-Up
