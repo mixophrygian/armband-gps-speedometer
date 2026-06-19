@@ -1,6 +1,9 @@
 # Armband GPS Speedometer
 
-A kid-wearable armband speedometer built from Adafruit modules:
+A kid-wearable armband speedometer with a rainbow comet LED strip, built from Adafruit modules:
+
+<img width="4032" height="3024" alt="IMG_9693" src="https://github.com/user-attachments/assets/bc3b3a26-924e-4150-a297-303ea21b6c35" />
+
 
 - GPS speed from an Adafruit Mini GPS PA1010D.
 - mph (2 decimals) on a 4-digit seven-segment FeatherWing.
