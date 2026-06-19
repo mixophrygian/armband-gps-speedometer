@@ -1,6 +1,6 @@
 # Armband GPS Speedometer
 
-A kid-wearable armband speedometer with a rainbow comet LED strip, built from Adafruit modules:
+A kid-wearable armband speedometer with a rainbow comet LED strip, attached to a generic kid-sized, adjustable wrist splint.  Built from Adafruit modules:
 
 <img width="4032" height="3024" alt="IMG_9693" src="https://github.com/user-attachments/assets/bc3b3a26-924e-4150-a297-303ea21b6c35" />
 
