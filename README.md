@@ -44,6 +44,14 @@ breadboard in the wearable.
 - LED lane wiring: single straight lane, no serpentine. (The firmware keeps the
   lane/`LANE_REVERSED` scaffolding so a future multi-lane build only needs the
   constants in `code.py` changed.)
+- GPS output: RMC sentences only, 2 fixes per second (`GPS_UPDATE_MS`). The
+  Feather reads the PA1010D at ~285 B/s over I2C; enabling all NMEA sentences
+  (~575 B/s) made it miss about half the fixes.
+- Stationary speed: the PA1010D's own static-navigation filter (factory default
+  1.0 m/s ≈ 2.24 mph) reports 0 while still, but only starts ~30 s after a fix.
+  The 1.0 mph firmware deadband (`SPEED_DEADBAND_MPH`) covers that window.
+- GPS start-up: without the optional CR1220 backup coin cell, every power-on is
+  a cold start (~37 s to first fix measured outdoors; datasheet: 35 s typical).
 
 ## Install
 
