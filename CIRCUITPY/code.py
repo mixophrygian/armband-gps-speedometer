@@ -55,10 +55,15 @@ SPEED_DEADBAND_MPH = 1.0
 # while moving without delaying the first real nonzero speed after you start.
 ZERO_CONFIRM_SAMPLES = 2
 
+# How often the GPS module computes a new fix (ms). 500 = 2 per second. Measured
+# on 2026-10-12: with RMC only, the Feather reads ~285 B/s at the polling below,
+# and RMC is ~72 B per fix, so up to ~3 per second fits without dropping fixes.
+GPS_UPDATE_MS = 500
+
 # How often to refresh things (seconds).
 DISPLAY_PERIOD_S = 0.35
 LED_PERIOD_S = 0.03   # ~33 fps
-GPS_PERIOD_S = 0.1    # poll the 1 Hz RMC stream in small non-jarring slices
+GPS_PERIOD_S = 0.1    # poll the RMC stream in small non-jarring slices
 # Cap a blocking GPS read so the main loop stays responsive.
 GPS_READ_TIMEOUT_S = 0.02
 
@@ -100,10 +105,10 @@ pixels = neopixel.NeoPixel(
 )
 
 gps = adafruit_gps.GPS_GtopI2C(i2c, debug=False, timeout=GPS_READ_TIMEOUT_S)
-# Output RMC only, update once per second. RMC carries fix status and speed, which
+# Output RMC only, GPS_UPDATE_MS apart. RMC carries fix status and speed, which
 # keeps the main app from building a stale backlog of GPS sentences.
 gps.send_command(b"PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
-gps.send_command(b"PMTK220,1000")
+gps.send_command("PMTK220,{:d}".format(GPS_UPDATE_MS).encode())
 
 # --- LED helpers -------------------------------------------------------------
 
@@ -311,7 +316,7 @@ def main():
         gps_updated = False
         sentence_type = None
 
-        # Read the 1 Hz GPS a couple times a second. Reading it every loop would
+        # Read the GPS every GPS_PERIOD_S. Reading it every loop would
         # overwork the shared I2C bus; each scheduled read is bounded by timeout.
         if now - last_gps_at >= GPS_PERIOD_S:
             last_gps_at = now
@@ -359,11 +364,10 @@ def main():
             and gps.speed_knots is not None
             and gps.timestamp_utc is not None
         ):
-            sample_key = (
-                gps.timestamp_utc.tm_hour,
-                gps.timestamp_utc.tm_min,
-                gps.timestamp_utc.tm_sec,
-            )
+            # Key on the RMC time field including fractional seconds
+            # ("hhmmss.sss"): timestamp_utc only has whole seconds, which would
+            # drop every fix after the first within a second at 2+ per second.
+            sample_key = gps.nmea_sentence.split(",")[1]
             if sample_key != last_sample_key:
                 last_sample_key = sample_key
                 raw_mph = gps.speed_knots * KNOTS_TO_MPH
