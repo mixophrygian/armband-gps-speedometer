@@ -1,4 +1,4 @@
 # Proto-board assembly
 
-See [Assembly](build.md#assembly) in the consolidated build guide and the
-[wiring guide](wiring.md) for pin assignments and switch connections.
+Follow the [assembly steps](build.md#assembly) and use the [wiring guide](wiring.md)
+for pin assignments and switch connections.

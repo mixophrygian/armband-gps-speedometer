@@ -1,4 +1,5 @@
 # Assembly checklist
 
-See [Assembly](build.md#assembly) and [Final checks](build.md#final-checks) in the
-consolidated build guide. Parts are listed in the [BOM](bom.md).
+The [build guide](build.md) has the [assembly steps](build.md#assembly) and
+[final checklist](build.md#final-checks). Start with the [parts list](bom.md)
+if you're gathering supplies.

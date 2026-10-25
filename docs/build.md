@@ -1,15 +1,16 @@
 # Build guide
 
-The build uses a Feather RP2040, a stacked seven-segment FeatherWing, an
-external PA1010D GPS, and one 10-pixel LED strip. Use the [BOM](bom.md) for parts,
-the [wiring guide](wiring.md) for pin assignments and switch connections, and the
-[enclosure guide](3d-printing-guide.md) for CAD and print settings.
+The hardware is a Feather RP2040 with a seven-segment FeatherWing stacked on top,
+a PA1010D GPS mounted outside the case, and a 10-pixel LED strip. The
+[BOM](bom.md) covers parts, the [wiring guide](wiring.md) covers connections, and
+the [enclosure guide](3d-printing-guide.md) covers CAD and print settings.
 
 ## Assembly
 
 Disconnect **both USB and LiPo** before soldering or changing connections. Check
 battery polarity with a meter against the Feather's `+`/`-` markings before
-first connection; a matching JST-PH housing does not guarantee matching polarity.
+plugging it in for the first time. A JST-PH plug can fit and still have its wires
+reversed.
 
 1. **Build the display stack.** Match the display's decimal points to the
    FeatherWing silkscreen. Fit male headers to the FeatherWing and stacking
@@ -17,8 +18,8 @@ first connection; a matching JST-PH housing does not guarantee matching polarity
    plugs into the sockets; check that neither row is offset by a pin.
 2. **Dry-fit the enclosure.** Trim the half-size perma-proto to the dimensions
    in the enclosure guide. Check the complete stack, trimmed header tails,
-   battery clearance, display orientation, and USB opening before committing
-   its position. Additional sockets under the Feather increase stack height.
+   battery clearance, display orientation, and USB opening before fixing
+   anything in place. Extra sockets under the Feather make the stack taller.
 3. **Test before permanent wiring.** Connect the GPS by STEMMA QT and temporarily
    wire the LED strip and switch following the wiring guide. Install firmware
    and run the [bench checks](#bench-checks) below while everything is accessible.
@@ -26,38 +27,37 @@ first connection; a matching JST-PH housing does not guarantee matching polarity
    then attach the baseplate to the armband and the base to the baseplate.
    Bond the strip and add a sewn fabric retainer. Feed the three-conductor LED
    cable through the enclosure opening **before soldering it to the proto
-   board**. The completed pod and strip are captive; separation requires
-   desoldering.
+   board**. Once soldered, the pod and strip stay connected; you'll need to
+   desolder the cable to separate them.
 5. **Wire the proto board.** Use 26 AWG stranded silicone wire and the
-   [canonical connection table](wiring.md). Fit the data resistor and ground
+   [connection table](wiring.md). Fit the data resistor and ground
    connections before soldering the Feather's tails into the board. Keep the
    data input at the strip's `DIN` end. A 100 µF, 6.3 V or higher capacitor at
-   the LED input is recommended but optional; observe polarity. Identify the
-   DPDT commons and throws with a meter, then verify both positions against the
+   the LED input is recommended but optional; check its polarity. Find the
+   DPDT commons and throws with a meter, then check both positions against the
    [switch table](wiring.md#dpdt-power-switch). Insulate the switch lugs and
    exposed LED joints.
-6. **Check the completed wiring unpowered.** Confirm the data path measures
-   approximately the series resistor value, all grounds connect, and neither
+6. **Check the wiring with power disconnected.** The data path should measure
+   roughly the series resistor value. Check that all grounds connect and neither
    battery nor switched LED power is shorted to ground. Verify the switch
    grounds `EN` and disconnects LED power in OFF. Re-run the bench checks after
    soldering.
-7. **Secure the internals.** Isolate the LiPo from solder joints, header tails,
+7. **Secure the internals.** Protect the LiPo from solder joints, header tails,
    and screws with felt or another protective layer. Support the stack so the
    display and USB port align without compressing the battery or forcing the
    lid closed. Clamp the cable at the enclosure exit and secure it at the strip
-   so flex reaches wire, not solder pads. Leave enough service slack to lift
-   the lid.
-8. **Mount the GPS on the lid.** The current CAD has a cable opening, not an
-   internal GPS retainer. With the electronics removed, drill mounting holes
+   so the wire takes the flex instead of the solder pads. Leave enough slack to
+   lift the lid.
+8. **Mount the GPS on the lid.** The case has a cable opening for the GPS but
+   no internal mount. With the electronics removed, drill mounting holes
    to match the board. Fit the battery and lid, then fasten the GPS at two
    diagonal corners with the ceramic antenna facing outward/skyward. Keep
-   cable slack so removing one screw lets the GPS hinge aside for service.
+   enough cable slack to swing the GPS aside after removing one screw.
    Keep screw tips clear of the battery and wiring.
 
-USB-C remains accessible for charging in place. The current enclosure has
-**no charge-LED window**; inspect the Feather's charge indicator with the pod
-open during the charging check. Add a window or light pipe only if external
-charge indication is needed.
+You can charge through USB-C with the case closed, but there's **no charge-LED
+window**. Open the pod to check the Feather's charge indicator. If you want to
+see it from outside, add a window or light pipe.
 
 ## Install firmware
 
@@ -77,10 +77,10 @@ For each bench test, copy the linked script to the **mounted board** as
 `code.py`. After testing, replace it with [CIRCUITPY/code.py](../CIRCUITPY/code.py).
 The repository's `CIRCUITPY/` directory is the source, not the mounted drive.
 
-The supplied firmware is configured for 10 pixels on `D6`, `BRIGHTNESS = 0.12`,
-and the documented strip direction. Adjust the layout constants if the strip
-differs. `DEBUG = True` enables once-per-second GPS status on the serial console;
-leave it off for normal use.
+The firmware expects 10 pixels on `D6`, with `BRIGHTNESS = 0.12`. Adjust the
+layout constants if your strip has a different length or orientation. Set
+`DEBUG = True` to print GPS status once per second on the serial console; leave
+it off for normal use.
 
 ## Bench checks
 
@@ -98,44 +98,47 @@ closing the enclosure.
 | GPS, if further diagnosis is needed | [06_gps_diagnostic.py](../CIRCUITPY/bringup/06_gps_diagnostic.py) | `0x10 on bus: True` and raw NMEA confirm communication. The script's `sats in view` label reports the GGA satellite count used in the fix. |
 | Complete assembly | [Main firmware](../CIRCUITPY/code.py) | Boot pattern, then the states below; numeric mph after an outdoor fix. |
 
-With the display test running, confirm battery-only boot after removing USB.
+With the display test loaded, remove USB and switch the board off and on to
+check that it boots on battery alone.
 Check charging with the battery connected and the switch OFF, then disconnect
 USB and verify that OFF disables the display/GPS and cuts LED power. Stop using
 a battery that heats abnormally, swells, or smells unusual.
 
 ## Status patterns
 
-These describe the supplied firmware. The animation rate is fixed; it does not
-represent speed.
+These are the firmware's display and LED patterns. The animation runs at a fixed
+rate; it doesn't change with speed.
 
 | State | Display | LEDs | Check |
 | --- | --- | --- | --- |
 | Boot | `8888` | Blue sweep | Reset or power on. |
 | No fix yet | `----` | Amber comets | Start without a usable sky view. |
-| Fresh fix | mph, two decimals below 100 mph | Rainbow comets | Obtain an outdoor fix and walk. |
-| Stale/lost fix | `----` | Yellow pulse | After a fix, obstruct reception and wait for fresh fixes to stop; the timeout is 3 seconds. |
+| Fresh fix | mph, two decimals below 100 mph | Rainbow comets | Get an outdoor fix and walk. |
+| Stale/lost fix | `----` | Yellow pulse | After getting a fix, block reception and wait for updates to stop; the timeout is 3 seconds. |
 | Caught runtime error | `Err` | Red flashing until reset | For a deliberate bench test, temporarily raise an exception inside `main()` after `boot_sweep()`, then restore the firmware. |
 
-Errors during imports or hardware setup occur before the main error handler and
-may only appear on the serial console. A failed display or strip can also prevent
-the error indication from working.
+Errors during imports or hardware setup happen before the main error handler
+starts, so check the serial console if you don't see an error pattern. The
+pattern also depends on the display and strip still working.
 
-The application suppresses speeds below 1 mph and requires two consecutive
-below-threshold samples to drop a moving reading to zero. Display precision is
-not a claim of GPS accuracy; see the [measurement summary](../README.md#what-the-measurements-show).
+The firmware shows zero for speeds below 1 mph. Once you're moving, it waits for
+two consecutive samples below that threshold before returning to zero. The two
+decimal places don't mean the GPS is that accurate; see the
+[measurement summary](../README.md#what-the-measurements-show).
 
 ## Final checks
 
 - [ ] USB boot, battery boot, switch OFF, and charging with the switch OFF work.
-- [ ] All pixels animate without flicker or resets at the configured brightness.
-- [ ] No-fix, normal, stale, and caught-error patterns are distinguishable.
+- [ ] All pixels animate without flicker or resets at your chosen brightness.
+- [ ] You can tell the no-fix, normal, stale, and caught-error patterns apart.
 - [ ] USB-C is reachable and the lid can open without pulling on solder joints.
 - [ ] No exposed conductors or sharp edges touch skin, fabric, or the LiPo.
-- [ ] Battery is retained without compression, bending, or contact with hardware.
+- [ ] Battery stays in place without being squeezed, bent, or pressed against
+      hardware.
 - [ ] Pod stays in place, the cable is strain-relieved at both ends, and the strip
       does not bend sharply at its pads.
-- [ ] Display is readable while worn; compare moving speed with a phone/watch as
-      a plausibility check, not a calibration reference.
+- [ ] You can read the display while wearing it. Compare speed with a phone/watch
+      to catch obvious problems; neither is a calibration reference.
 - [ ] Check comfort after 10 minutes and record runtime at the chosen brightness.
       **90 minutes is a design target, not a measured result.**
 
@@ -144,11 +147,11 @@ not a claim of GPS accuracy; see the [measurement summary](../README.md#what-the
 | Symptom | Check |
 | --- | --- |
 | No `CIRCUITPY` drive | USB data cable, switch ON, and correct UF2. `RPI-RP2` is the bootloader drive. |
-| Blank serial console | Use a console that asserts DTR. On macOS, `screen /dev/cu.usbmodem… 115200` worked in this build; substitute the actual port. Close other programs holding the port. Exit screen with `Ctrl-A`, `K`, `y`. |
+| Blank serial console | Use a console that asserts DTR. On macOS, `screen /dev/cu.usbmodem… 115200` worked in this build; use your board's port name. Close other programs using the port. Exit screen with `Ctrl-A`, `K`, `y`. |
 | Import error | Re-run the circup install command; copying only the three top-level libraries omits dependencies. |
 | No `0x70` | Power off; check header alignment, display orientation, and solder joints. |
 | No `0x10` | Power off; reseat the STEMMA QT cable and check its routing. |
-| GPS responds but has no fix | Take the antenna outdoors with an open sky view. A first fix can take minutes; an I²C response proves communication, not reception. |
+| GPS responds but has no fix | Take the antenna outdoors with a clear view of the sky. A first fix can take minutes. Seeing the GPS on I²C only tells you the board can talk to it. |
 | Display works but strip is dark | Battery/switch power path, shared ground, `DIN` direction, and the D6/resistor path. |
 | Flicker or resets | Check battery voltage and connections under load, reduce brightness, and inspect the LED supply wiring. |
-| No visible charge indication when closed | The current CAD has no charge-LED window; inspect with the pod open. |
+| No visible charge indication when closed | The case has no charge-LED window; open the pod to check. |

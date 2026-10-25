@@ -1,6 +1,6 @@
 # Bench bring-up
 
-See the consolidated [build guide](build.md):
+These instructions now live in the [build guide](build.md):
 
 - [Install firmware](build.md#install-firmware)
 - [Bench checks](build.md#bench-checks)
