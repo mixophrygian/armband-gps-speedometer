@@ -165,12 +165,16 @@ Success: four wires run board->switch; two lugs empty; lug joints insulated.
 The 3-conductor cable that leaves the pod and runs to the armband lane. Cut it
 **long** with extra service slack. Colors: red `+`, black `GND`, third = data.
 
+If you are already using the printed enclosure, attach the base/baseplate and
+feed this cable through the base hole **before** soldering it to the perma-proto.
+After this step, the pod and armband are one captive unit unless you desolder.
+
 1. **Data wire:** **DATA row** -> lane **`DIN`** pad.
 2. **`+` wire:** **LEDV row** (shares the row with the switch pole-2 common wire)
    -> lane **`+`** pad.
 3. **`GND` wire:** **`-` rail** -> lane **`GND`** pad.
 4. Heat-shrink every joint at the lane end. Strain-relieve the cable at the lane
-   end now; the pod-wall strain relief waits for the enclosure.
+   end now; finish the base-hole strain relief once the lid fit is confirmed.
 
 > A 100 uF cap is optional for this build (you've run fine without one). If you
 > add it, it goes across the lane's `+` and `GND` **at the armband**, polarity

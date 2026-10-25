@@ -16,7 +16,7 @@ Armband, semi-permanent LED
 +----------------------------------------------------+
 ```
 
-> Note: this v2 **hardwires** the pod to the armband lane — three continuous
+> Note: this build **hardwires** the pod to the armband lane — three continuous
 > conductors (`+`, `GND`, data), no pod-to-armband connector. The pod is charged
 > **in place via USB-C** and never separates from the armband for daily use, so
 > the connector that earlier plans used (to unplug the pod for charging) was
@@ -25,7 +25,7 @@ Armband, semi-permanent LED
 > — separating them later means desoldering. See `3d-printing-guide.md` for the
 > documented 3D-printed pod.
 
-This v2 is a **single 10-pixel lane** — the armband only has room for about 10
+This build is a **single 10-pixel lane** — the armband only has room for about 10
 pixels at 60 LED/m. That removes the serpentine wiring and the lane-to-lane data
 joints the original four-lane plan needed. The firmware still keeps the lane
 scaffolding so it is one constant change away from multi-lane:
@@ -78,7 +78,7 @@ Use these connection sources:
 | LED ground | `GND` stacking-header tail to perma-proto |
 | Power switch | `EN` stacking-header tail to switch, then `GND` when off |
 
-For v1, the cleanest layout is usually a small perma-proto next to or under the
+For this build, the cleanest layout is usually a small perma-proto next to or under the
 Feather stack, with short wires from the accessible bottom tails. If you can make
 a tidy underside proto mount without blocking USB-C, the tails can also be
 soldered into that proto board.
@@ -175,7 +175,13 @@ a small window or light pipe for the charge status LED.
 
 - Never let the LiPo bend, crush, rub against solder joints, or sit under screw
   heads.
+- Add a felt square between the battery and the Feather/perma-proto area so the
+  battery cannot rub on solder joints or header tails.
+- A small foam pad in the base can lift/support the stack for display-window
+  alignment, but it should not compress the LiPo or force the lid closed.
 - Cover exposed LED strip pads with heat shrink or flexible sealant.
+- Glue the LED strip to the armband, then add a sewn stretchy-fabric tether over
+  it so adhesive is not the only thing resisting sweat and flex.
 - Strain-relieve the hardwired cable where it exits the pod (clamp at the
   grommet) and where it meets the lane, so arm motion flexes the cable, never
   the solder pads. Leave a little service slack so the pod can open without

@@ -261,6 +261,40 @@ fit instead of a guess.
 
 ---
 
+## Part 5 — Final wearable assembly notes
+
+The physical assembly order matters because the LED lane is hardwired through
+the printed base. The final build went together in this order:
+
+1. Attach the **baseplate to the armband first**. Check orientation before sewing
+   or tying anything down: when the pod is mounted, the display should read the
+   right direction on the wearer's arm.
+2. Attach the LED strip to the armband. Glue holds the strip in place, but add a
+   sewn stretchy-fabric tether over it so sweat, flex, and kid-handling are not
+   relying on adhesive alone.
+3. Attach the **base to the baseplate**. The printed screw holes are useful for
+   alignment, but the final build used adhesive here plus leather-working thread
+   and extra Velcro on the baseplate/armband instead of relying only on screws.
+4. Feed the three LED wires through the base hole **before soldering them to the
+   perma-proto**. Once soldered, the pod and armband are captive.
+5. Before final soldering, dry-fit the Feather/display stack in the base and make
+   sure the USB-C port lines up with the side window. A little foam in the bottom
+   of the base can lift the stack so the display sits correctly in the lid
+   window.
+6. Add a square of felt between the Feather/perma-proto area and the battery so
+   the battery never rubs against solder joints or header tails.
+7. After LED wiring is routed and soldered, connect the switch, GPS, and battery.
+   Fit the lid with the wires bunched inside the pod but not crossing over the
+   display or blocking the display window.
+8. Mount the GPS board on top of the lid with two small screws on diagonal
+   corners. Installing the battery first leaves enough slack to remove one GPS
+   screw later and hinge the GPS board out of the way for a battery swap.
+
+The exact foam/felt thickness is a dry-fit detail: use just enough to support and
+isolate the parts without compressing the LiPo or forcing the lid closed.
+
+---
+
 ## When you're back at it
 
 The realistic path: install OpenSCAD, render the box, **print the plain base

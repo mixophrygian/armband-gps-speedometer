@@ -9,7 +9,7 @@ A kid-wearable armband speedometer built from Adafruit modules:
 - Electronics pod hardwired to the lane, charged in place via USB-C through the
   Feather RP2040 (no pod-to-armband connector).
 
-This v1 intentionally avoids a custom PCB. It uses existing Adafruit boards and
+This build intentionally avoids a custom PCB. It uses existing Adafruit boards and
 a small soldered perma-proto wiring hub inside the pod. Do not use a solderless
 breadboard in the wearable.
 

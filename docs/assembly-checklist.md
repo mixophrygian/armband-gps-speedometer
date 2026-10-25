@@ -6,9 +6,9 @@
 - [ ] NeoPixel strip quantity is 1 m; the build only uses ~10 pixels (~167 mm).
 - [ ] LiPo is Adafruit-compatible JST-PH polarity.
 - [ ] STEMMA QT cable is present for the GPS.
-- [ ] 26-30 AWG silicone wire (red/black/data color) for the hardwired pod-to-lane cable is present. (v2 uses no pod-to-armband connector; the JST-PH 6-pin pairs are spares.)
+- [ ] 26-30 AWG silicone wire (red/black/data color) for the hardwired pod-to-lane cable is present. (This build uses no pod-to-armband connector.)
 - [ ] 6mm-bushing DPDT toggle switch is present.
-- [ ] Resistor, capacitor, silicone wire, heat shrink, Velcro, foam, and USB-C cable are present.
+- [ ] Resistor, capacitor, silicone wire, heat shrink, Velcro, felt/foam, stretchy fabric, heavy thread, adhesive, and USB-C cable are present.
 
 ## 2. Bench Bring-Up
 
@@ -44,10 +44,13 @@
 
 ## 5. Pod And Armband Dry Fit
 
+- [ ] Baseplate orientation is correct before attachment; the display will read the right direction when worn.
 - [ ] GPS antenna is skyward and unobstructed.
 - [ ] Display is readable while worn.
 - [ ] Switch is reachable but not easy to bump accidentally.
 - [ ] USB-C is reachable without opening the pod.
+- [ ] A small foam pad under the stack lifts/supports the display alignment without forcing the lid closed.
+- [ ] A felt square isolates the battery from the Feather/perma-proto solder joints.
 - [ ] LiPo is padded and isolated from solder joints.
 - [ ] Hardwired pod-to-lane cable is strain-relieved at the pod grommet, with coiled service slack so the lid can lift.
 - [ ] Pod Velcros on and off the armband cleanly.
@@ -57,8 +60,15 @@
 
 ## 6. Final Assembly
 
+- [ ] Baseplate is attached to the armband with thread/Velcro; orientation has been checked.
+- [ ] LED strip is glued down and also held with sewn stretchy fabric.
+- [ ] Base is attached to the baseplate with adhesive; printed screw holes were used only as needed for alignment/backup.
+- [ ] LED wires are fed through the base hole before they are soldered to the proto board.
 - [ ] Permanent wiring is soldered on the proto board. See `proto-soldering.md`
-      for the step-by-step solder order (can be done before choosing an enclosure).
+      for the step-by-step solder order.
+- [ ] USB-C port still aligns with the base window before the lid is closed.
+- [ ] Wires fit inside the pod without crossing over the display/window.
+- [ ] GPS board is screwed to the lid after battery installation; diagonal screws leave it able to hinge aside for battery service.
 - [ ] All exposed joints are heat-shrunk or insulated.
 - [ ] Boards are secured with standoffs, screws, or foam tape.
 - [ ] Pod corners are rounded or padded.

@@ -46,9 +46,12 @@ other vendors work unless a note says otherwise.
 | --- | --- | --- |
 | 1 | Armband | Any wearable band; the LED lane is semi-permanently attached to it. |
 | 1 | 3D-printed pod/enclosure | Print the parametric enclosure in `cad/` using `docs/3d-printing-guide.md`. |
-| Several | Velcro/hook-and-loop patches | Attach the pod to the armband. |
-| Several | Flexible fabric/foam backing strips | Prevent sharp bends at LED solder joints. |
-| Several | Cable tie points, thread, or adhesive | Strain relief at the pod-to-lane cable and LED lane ends. |
+| Several | Velcro/hook-and-loop patches | Extra baseplate/pod retention on the armband. |
+| Several | Stretchy fabric strips | Sew over the glued LED strip so adhesive is not the only retention. |
+| Several | Felt and foam scraps | Felt isolates the battery from solder/header points; foam can tune display height in the base. |
+| Several | Leather-working thread or heavy thread | Sew/tether the baseplate and fabric retainers to the armband. |
+| Several | Adhesive | Bond the base to the baseplate and tack down the LED strip before sewing fabric retainers. |
+| Several | Cable tie points or thread | Strain relief at the pod-to-lane cable and LED lane ends. |
 
 ## Optional
 
