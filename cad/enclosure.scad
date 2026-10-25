@@ -8,16 +8,14 @@
 //    Choose what to show with `part` below. Watch the console: it ECHOes the
 //    battery clearance and the computed USB cutout height every render.
 //
-//  Vertical stack-up, floor -> sky (per your assembly):
+//  Vertical stack-up, floor -> sky:
 //    floor -> [LiPo 7mm, flat on the floor] -> small gap -> PERMA-PROTO
 //    (the Feather's header tails plug DOWN into it) -> Feather (sits close above
 //    the proto) -> stacking-header gap -> FeatherWing backpack -> 7-seg display
-//    (face seats against the lid window). display+Feather+proto hang from the lid
-//    as ONE plugged-together unit; the battery sits on the floor beneath them.
-//    The half-size perma-proto (51 x 81) is far too LONG for this box (81 > 64),
-//    so it's TRIMMED to a small hub (proto_l/proto_w) that fits under the Feather.
-//    Still MEASURE the assembled drop (display face -> proto bottom) to confirm
-//    the height - that's the one number specs can't give you.
+//    (face aligns with the lid window). The plain prototype uses foam to support
+//    the stack, with insulation between the wiring hub and battery. The half-size
+//    perma-proto is trimmed from 81 x 51 to 65 x 51 mm. Measure the complete stack
+//    and allow for solder, header tails, insulation, and wiring below it.
 //
 //  Companion guide: docs/3d-printing-guide.md
 // ============================================================================
@@ -27,12 +25,12 @@
 //  WHAT TO RENDER / EXPORT  (one part at a time; export each as its own STL)
 // ============================================================================
 part = "base";   // "base" | "lid" | "lid_print" | "baseplate" | "assembled"
-mount_features = false;   // false = plain box (print this FIRST); true = add posts/cradle
+mount_features = false;   // false = plain prototype; true = optional Feather posts/battery cradle
 $fn = 56;
 
 
 // ============================================================================
-//  MEASURED PARTS  —  values are your Adafruit spec sheets. (VERIFY) = confirm.
+//  PART DIMENSIONS — nominal values; confirm against the actual assembly.
 // ============================================================================
 
 // --- Feather RP2040 + 7-seg FeatherWing stack (tallest assembly) ------------
@@ -40,21 +38,16 @@ feather_l        = 51.0;   // Feather 51.0 x 23.0 x 7.5
 feather_w        = 23.0;
 stack_hang       = 22.0;   // display face (at lid) -> Feather PCB bottom   << MEASURE
 stack_envelope   = 27.0;   // display face -> tail tips, TRIMMED tails      << MEASURE
-                           //   (was ~29 untrimmed; trimming flush after wiring is
-                           //    what gets the box to ~41mm. Don't trim -> set back
-                           //    to ~29 and bump inner_h ~4mm.)
+                           // Include any lower solder/hub/insulation in the fit check.
 feather_hole_dl  = 45.72;  // Feather mount-hole spacing, lengthwise  (VERIFY)
 feather_hole_dw  = 17.78;  // Feather mount-hole spacing, widthwise   (VERIFY)
-//  stack_hang and stack_envelope set the box HEIGHT and the USB cutout height,
-//  and they depend on your stacking headers + how far the display stands off
-//  the backpack + how you trim the tails -- none of which is on a spec sheet.
-//  So MEASURE the assembled stack: face->Feather-PCB, and face->tail-tips.
-//  Defaults here are a conservative estimate (display standoff ~10, header gap
-//  ~8.5, tails ~7.5). Trimming the tails drops stack_envelope ~4mm; shave inner_h.
+//  stack_hang sets the USB cutout height; stack_envelope is used in the clearance
+//  diagnostic. Neither changes inner_h automatically. Measure both on the
+//  assembled stack, including the actual headers and trimmed tails.
 
 // --- 0.56" 4-digit 7-seg display --------------------------------------------
 disp_pkg_l       = 50.0;   // display face length   (MEASURE your part)
-disp_pkg_w       = 20.0;   // display face height    (you measured ~20, spec said 19)
+disp_pkg_w       = 20.0;   // display face height   (MEASURE actual part)
 disp_lip         = -2.0;   // NEGATIVE = clearance. -2 => window is 4mm bigger than the
                            //   display (2mm slop all round), so a recessed display
                            //   shows through with a small border and needs no precise
@@ -64,18 +57,17 @@ disp_lip         = -2.0;   // NEGATIVE = clearance. -2 => window is 4mm bigger t
 gps_pcb_l        = 25.5;
 gps_pcb_w        = 25.4;
 gps_ant_l        = 11.0;   // ceramic patch antenna footprint  (VERIFY!)
-gps_ant_w        = 11.0;   // antenna pokes UP through a hole this size
+gps_ant_w        = 11.0;   // reference only; GPS is external, no antenna cutout
 
 // --- LiPo 2000 mAh (PID 2011)  60 x 36 x 7,  lies FLAT on the floor ---------
-batt_l           = 62.0;   // sets the box LENGTH
+batt_l           = 62.0;   // battery envelope; cavity footprint is set by the proto hub
 batt_w           = 37.0;
 batt_h           = 7.0;
 
 // --- Perma-proto wiring hub (TRIMMED from a half-size 51 x 81 board) ---------
-//  Half-size because the quarter board hadn't enough holes. The hub must seat
-//  the WHOLE Feather AND give spare rows to wire in the switch + LED strip, so
-//  it's 65 x 51 (cut only the 81mm length down to 65; width left uncut at ~51).
-//  This board now DRIVES the box length AND width - see inner_l / inner_w.
+//  The 65 x 51 hub seats the Feather with spare rows for switch and LED wiring.
+//  Trim the stock 81mm length; retain the 51mm width. This sets the cavity
+//  footprint required by the wiring assembly; see inner_l / inner_w.
 //  Reference dims for the fit check (verify_fit.py); the proto isn't printed.
 proto_l          = 65.0;   // length, cut down from the stock 81
 proto_w          = 51.0;   // width, left at the stock 51 (uncut)
@@ -83,22 +75,20 @@ proto_w          = 51.0;   // width, left at the stock 51 (uncut)
 // --- Ports (sizes; positions are in LAYOUT / GEOMETRY) ----------------------
 usb_w            = 15.0;   // USB-C cutout width  - oversized for position slop
 usb_h            = 10.0;   // USB-C cutout height - oversized in case usb_z is off
-led_d            = 3.0;    // charge-LED hole / light pipe
+led_d            = 3.0;    // unused: no charge-LED opening in this model
 grommet_d        = 7.0;    // armband-cable grommet
-//  SWITCH: your part is a TOGGLE with a 6mm threaded bushing (6-pin DPDT),
-//  NOT a slide switch. So the cutout is a ROUND hole + nut, not a slot.
-//  Body ~13(w) x 12(deep) x 10(tall) sits INSIDE the box; lever sticks OUT.
+//  DPDT toggle: round bushing hole, no printed guard. Confirm body/terminal
+//  clearance inside the lid; nominal body is ~13 x 12 x 10 mm.
 switch_hole_d    = 6.7;   // 6mm thread + clearance (some are 1/4" -> try 6.7)
 
 
 // ============================================================================
 //  ENCLOSURE SHELL
 // ============================================================================
-inner_l   = 71;    // now set by the 65mm trimmed proto + end slack (the proto is
-                   //   the longest thing in the box, not the 60mm battery)
+inner_l   = 71;    // 65mm trimmed proto + end slack
 inner_w   = 57;    // holds the 51mm-wide proto hub (centred) with margin
-inner_h   = 36;    // ~41mm external. ASSUMES trimmed tails (see stack_envelope).
-                   //   battery(7) + proto(2) + stack(25) + clearance(2).
+inner_h   = 36;    // 41mm seated shell; excludes baseplate and external GPS/lever.
+                   // Nominal 2mm battery-to-tail clearance BEFORE lower hub/insulation.
 //  L and W are now driven by the wiring hub: it has to seat the whole Feather
 //  PLUS spare rows for the switch + LED-strip wiring, so it's 65 x 51.
 //  Height is still set by the vertical stack + battery underneath (CoG stays low).
@@ -131,12 +121,8 @@ cradle_h       = 5.0;
 // --- mounting baseplate (separate part: pod-size, sewn on, NO outboard flange)
 show_mount     = true;   // draw the baseplate under the pod in the "assembled" view
 plate_th       = 3.0;    // plate thickness
-mount_radius   = 10000;  // DEFAULT FLAT for printing. A concave dish only touches
-                         //   the bed at its rim and FAILS mid-print, so print the
-                         //   plate flat and curve it to the brace by HEAT-FORMING
-                         //   (heat gun till floppy, press onto the brace, hold to
-                         //   cool). Only set a real radius (e.g. 120) if you truly
-                         //   intend to print the curve with supports - not advised.
+mount_radius   = 10000;  // nearly flat underside; check the slicer preview.
+                         // Smaller radii create a concave underside requiring support.
 rail_h         = 4.0;    // locating rails the pod body nests between (anti-rock)
 rail_t         = 2.0;
 mount_screw_d  = 3.2;    // M3 up into the pod's end ears (uses the bottom pilots)
@@ -150,28 +136,18 @@ groove_depth   = 1.4;    // leaves ~1.6mm bridge under the thread - don't go dee
 // ============================================================================
 //  LAYOUT  —  looking DOWN at the lid. (0,0) = box centre. +X right, +Y top.
 // ============================================================================
-stack_x = -7;    stack_y = -4;    // display/Feather REAL centre: FLUSH-LEFT (USB left),
-                                 //   slightly below centre. From your measurement:
-                                 //   proto flush to the bottom wall, Feather bottom
-                                 //   13.35mm up -> Feather centre ~ -4 in Y.
-                                 //   You soldered the Feather centred (USB end flush,
-                                 //   ~centred in width), so the display lives in the
-                                 //   MIDDLE - not pushed to an edge. VERIFY against
-                                 //   your board: this is ~+7mm toward the USB end and
-                                 //   ~1mm off centre in width, from your measurements.
+stack_x = -7;    stack_y = -4;    // display/Feather centre: 7mm left, 4mm below centre.
+                                 // USB is on -X; verify against the soldered assembly.
 batt_x  = 0;     batt_y  = 4;    // battery on the floor, under the stack
 
-usb_y      = stack_y;     // USB-C/LED follow the Feather centre, on the +X end wall
-led_gap    = -9;          // charge-LED hole this far from the USB; NEGATIVE = the
-                          //   OTHER side of the USB (toward the bottom). Tune the
-                          //   magnitude to your board's actual LED-to-USB spacing.
+usb_y      = stack_y;     // USB-C follows the Feather centre, on the -X end wall
+led_gap    = -9;          // unused: no charge-LED opening in this model
 
 // Switch points UP through the LID, in the TOP-LEFT (above the down-pushed Feather)
 switch_x   = -22;   switch_y = 18;
 
-// GPS body glues ON TOP at the top-right, but its cable is surface-mounted and
-// points DOWN - so the cable hole goes at the BOTTOM-RIGHT, where the cable drops
-// in (also nearer the low Feather's STEMMA connector):
+// GPS mounts externally on the lid; its screw holes are drilled during assembly.
+// Only the cable opening is modeled, at the bottom-right near the STEMMA connector:
 gps_cable_x = 25;   gps_cable_y = -16;   gps_cable_d = 6;
 
 // LED cable grommet in the +X END WALL (LED-reserve / cut end is on the RIGHT).
@@ -179,7 +155,7 @@ gps_cable_x = 25;   gps_cable_y = -16;   gps_cable_d = 6;
 // straight out - no underside soldering. Tune grommet_z to your wire height.
 grommet_y  = 12;
 grommet_z  = 26;
-//  NOTE: usb_z (height up the +X wall) is DERIVED below from stack_hang.
+//  NOTE: usb_z (height up the -X wall) is DERIVED below from stack_hang.
 
 
 // ############################################################################
@@ -202,7 +178,7 @@ usb_z = wall_top_z - stack_hang + 3.2;
 // self-checks (read the console after F5)
 echo(str("[fit] battery clearance = ", inner_h - stack_envelope - batt_h,
          " mm  (need >= 2; raise inner_h or trim tails if low)"));
-echo(str("[fit] USB cutout centre = z ", usb_z, " mm up the +X wall"));
+echo(str("[fit] USB cutout centre = z ", usb_z, " mm up the -X wall"));
 
 module rbox(l, w, h, r) {
     linear_extrude(height=h) offset(r=r) square([l-2*r, w-2*r], center=true);
@@ -235,10 +211,7 @@ module base_ears() {
 module base_ports() {                                          // switch is on the LID
     translate([-outer_l/2 + wall/2, usb_y, usb_z])              // USB-C, -X (LEFT) end wall
         cube([wall*3, usb_w, usb_h], center=true);
-    // Charge-LED end-wall hole REMOVED: the CHG LED faces UP, so an end-wall hole
-    // can't see it, and the enlarged USB was overlapping it (that exact touch was
-    // the non-manifold warning). Put the indicator in the LID above the LED, or
-    // use a light pipe - ask and I'll add it.
+    // No charge-LED window or light pipe is modeled.
 }
 
 module battery_cradle() {
@@ -262,7 +235,7 @@ module lid() {
                 rbox(outer_l, outer_w, lid_th, corner_r);
                 base_ears_lid();
             }
-            // display window (slides up flush) at the Feather's REAL centre
+            // display window aligned with the Feather/display centre
             translate([stack_x, stack_y, -1])
                 rbox(disp_pkg_l - 2*disp_lip, disp_pkg_w - 2*disp_lip, lid_th+2, 1.5);
             // switch bushing - toggle points UP through here; body hangs inside
@@ -356,5 +329,6 @@ else if (part == "baseplate") baseplate();
 else if (part == "assembled") {
     if (show_mount) color("Tan", 0.9) translate([0,0,-plate_th]) baseplate();
     base();
+    // Lifted by lip_h for preview; the seated lid underside is at wall_top_z.
     color("LightSteelBlue", 0.85) translate([0,0,wall_top_z + lip_h]) lid();
 }

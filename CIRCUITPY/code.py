@@ -1,10 +1,10 @@
 """Armband GPS Speedometer - main firmware.
 
-Copy this file to the Feather's CIRCUITPY drive as `code.py` after the bench
-bring-up stages pass (see docs/bench-bringup.md). Requires these libraries in
-CIRCUITPY/lib/: adafruit_gps, adafruit_ht16k33, neopixel.
+Copy this file to the Feather's CIRCUITPY drive as `code.py` after the checks
+in docs/build.md. Install libraries and dependencies with circup using
+CIRCUITPY/lib/requirements.txt.
 
-Behavior (see docs/test-plan.md "Intentional State Tests"):
+Behavior (see docs/build.md "Status patterns"):
 - Boot:               display "8888" + blue sweep across the LED strip.
 - No fix (never had): display "----" + amber comet.
 - Normal (has fix):   display mph (2 decimals) + rainbow comets.
@@ -29,11 +29,8 @@ import neopixel
 
 KNOTS_TO_MPH = 1.15078
 
-# NeoPixel layout. v2 is a single 10-pixel lane (armband space only fits ~10
-# pixels at 60 LED/m). Change PIXELS_PER_LANE to match whatever you physically
-# cut and wired. The lane scaffolding (LANE_COUNT / LANE_REVERSED / chain_index)
-# is kept parameterized so a future multi-lane build only needs these constants
-# changed; with one lane it is effectively a straight strip, no serpentine.
+# NeoPixel layout: one 10-pixel lane at 60 LED/m. Match these constants to the
+# physical strip; LANE_REVERSED maps physical positions to the data-chain order.
 LANE_COUNT = 1
 PIXELS_PER_LANE = 10
 PIXEL_COUNT = LANE_COUNT * PIXELS_PER_LANE
@@ -44,10 +41,9 @@ BRIGHTNESS = 0.12  # documented cap; lower it if the battery browns out
 # A fix that disappears for longer than this is treated as stale/lost.
 STALE_AFTER_S = 3.0
 
-# Speeds below this are shown as 0.00. A physically stationary GPS still
-# reports a slow random walk (each 1 Hz fix lands a few metres away, typically
-# under ~1 mph); without this deadband the display jitters between 0 and a
-# couple mph while you stand still.
+# Stationary captures contain nonzero reported speeds (see README.md).
+# This application cutoff suppresses small readings; it does not depend on an
+# assumed GPS static-navigation threshold or startup timer.
 SPEED_DEADBAND_MPH = 1.0
 
 # How many consecutive below-deadband GPS speed samples are required before the
@@ -55,9 +51,9 @@ SPEED_DEADBAND_MPH = 1.0
 # while moving without delaying the first real nonzero speed after you start.
 ZERO_CONFIRM_SAMPLES = 2
 
-# How often the GPS module computes a new fix (ms). 500 = 2 per second. Measured
-# on 2026-10-12: with RMC only, the Feather reads ~285 B/s at the polling below,
-# and RMC is ~72 B per fix, so up to ~3 per second fits without dropping fixes.
+# Requested GPS fix interval: 500 ms = 2 Hz. The 2026-10-12 tests at 1 Hz
+# recovered more valid RMC reports with RMC-only output than with all sentences.
+# Those tests do not establish a maximum lossless rate or an I2C bandwidth limit.
 GPS_UPDATE_MS = 500
 
 # How often to refresh things (seconds).

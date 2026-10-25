@@ -1,79 +1,62 @@
 # Armband GPS Speedometer
 
-A kid-wearable armband speedometer with a rainbow comet LED strip, attached to a generic kid-sized, adjustable wrist splint.  Built from Adafruit modules:
+A wearable speedometer built around a Feather RP2040, a PA1010D GPS receiver,
+a four-digit display, and ten NeoPixels. The electronics sit in a printed pod
+on a kid-sized wrist splint, with a rainbow comet running along the band.
 
-<img width="4032" height="3024" alt="IMG_9693" src="https://github.com/user-attachments/assets/bc3b3a26-924e-4150-a297-303ea21b6c35" />
+![Completed armband speedometer](https://github.com/user-attachments/assets/bc3b3a26-924e-4150-a297-303ea21b6c35)
 
+The firmware displays GPS ground speed in mph. LED patterns distinguish startup,
+waiting for a fix, normal operation, a stale fix, and an application error.
+The animation runs at a fixed rate; it does not encode speed. Two decimal places
+are display resolution, not a claim of GPS accuracy.
 
-- GPS speed from an Adafruit Mini GPS PA1010D.
-- mph (2 decimals) on a 4-digit seven-segment FeatherWing.
-- A single 10-pixel NeoPixel lane on the armband (scoped down from the original
-  four-lane plan; the armband only has room for ~10 pixels at 60 LED/m).
-- Electronics pod hardwired to the lane, charged in place via USB-C through the
-  Feather RP2040 (no pod-to-armband connector).
+## Build it
 
-This build intentionally avoids a custom PCB. It uses existing Adafruit boards and
-a small soldered perma-proto wiring hub inside the pod. Do not use a solderless
-breadboard in the wearable.
+| Reference | Contents |
+| --- | --- |
+| [Parts](docs/bom.md) | Exact modules, mechanical constraints, and substitutions |
+| [Wiring](docs/wiring.md) | Connections, I²C addresses, and the two-pole power switch |
+| [Build and verification](docs/build.md) | Firmware installation, bench checks, and assembly order |
+| [Enclosure](docs/3d-printing-guide.md) | CAD parameters, printable parts, orientation, and fit |
 
-## Project Structure
+The build uses soldered perma-proto as a wiring hub; no custom PCB is needed.
+The display plugs into stacking headers on the Feather. The GPS mounts on top
+of the lid, and the LiPo sits below the board stack with insulation between it
+and the solder joints. The current CAD shell is **75.8 × 61.8 × 41 mm**, excluding
+the screw ears, baseplate, and external GPS.
 
-- `CIRCUITPY/code.py` - firmware to copy onto the Feather's CIRCUITPY drive.
-- `CIRCUITPY/bringup/` - staged test programs to copy as `code.py` during
-  bench bring-up.
-- `CIRCUITPY/lib/requirements.txt` - CircuitPython libraries to copy into
-  `CIRCUITPY/lib/`.
-- `docs/bom.md` - purchase list and missing-part traps.
-- `docs/bench-bringup.md` - detailed first-power, header, display, GPS,
-  battery, and LED bring-up instructions.
-- `docs/wiring.md` - electrical wiring, LED lane, and charging switch.
-- `docs/assembly-checklist.md` - build phases from bench to final armband.
-- `docs/3d-printing-guide.md` - primary enclosure walkthrough for the
-  3D-printed pod (OpenSCAD, slicing for Bambu/Prusa, PETG, print order).
-- `cad/enclosure.scad` - parametric 3D-printable enclosure (compact, battery
-  under the stack for low CoG; ~69 x 61 x 41 mm).
-- `cad/verify_fit.py` - optional CAD sanity check that redraws the plan view.
-- `docs/test-plan.md` - bench and field acceptance tests.
+A three-wire cable permanently joins the pod to the LED strip. The battery
+charges through the Feather's USB-C port with the assembly still on the band.
+A DPDT switch disables the Feather regulator and disconnects LED power while
+leaving the charger connected.
 
-## Firmware Defaults
+## Firmware
 
-- Units: mph.
-- Display: speed in mph, 2 decimals (auto-drops to 1 decimal at/above 100 mph to fit 4 digits).
-- LED lanes: 1.
-- Pixels per lane: 10.
-- Total pixels: 10.
-- LED pin: Feather `D6`.
-- LED brightness cap: `0.12`.
-- LED lane wiring: single straight lane, no serpentine. (The firmware keeps the
-  lane/`LANE_REVERSED` scaffolding so a future multi-lane build only needs the
-  constants in `code.py` changed.)
-- GPS output: RMC sentences only, 2 fixes per second (`GPS_UPDATE_MS`). The
-  Feather reads the PA1010D at ~285 B/s over I2C; enabling all NMEA sentences
-  (~575 B/s) made it miss about half the fixes.
-- Stationary speed: the PA1010D's own static-navigation filter (factory default
-  1.0 m/s ≈ 2.24 mph) reports 0 while still, but only starts ~30 s after a fix.
-  The 1.0 mph firmware deadband (`SPEED_DEADBAND_MPH`) covers that window.
-- GPS start-up: without the optional CR1220 backup coin cell, every power-on is
-  a cold start (~37 s to first fix measured outdoors; datasheet: 35 s typical).
+[CIRCUITPY/code.py](CIRCUITPY/code.py) is the application; the
+[build guide](docs/build.md#install-firmware) covers installing CircuitPython
+and its libraries. Configuration constants are at the top of the file:
 
-## Install
+| Setting | Default |
+| --- | --- |
+| LED strip | 10 pixels, `D6`, brightness `0.12` |
+| GPS output | RMC only, requested at 2 Hz |
+| Display refresh | Every 0.35 s |
+| Stale fix timeout | 3 s |
+| Stationary-speed cutoff | Below 1.0 mph; two consecutive low samples before clearing a moving reading |
 
-Start with `docs/bench-bringup.md`; it walks through Feather setup, header
-soldering, display installation, GPS, battery charging, and LED tests in order.
+## What the measurements show
 
-Quick install summary:
+Reducing the GPS output to RMC sentences improved recovery of speed updates in
+the polling tests: at a 1 Hz GPS setting, one 60-second run recovered 60 valid
+RMC reports with RMC-only output, versus 31 with all sentences enabled. These
+are results for the tested polling configuration, not an I²C bandwidth limit.
 
-1. Install CircuitPython for the Adafruit Feather RP2040.
-2. Copy `CIRCUITPY/code.py` to the CIRCUITPY drive as `code.py`.
-3. Copy the required libraries from the Adafruit CircuitPython Library Bundle
-   into `CIRCUITPY/lib/`: `adafruit_gps`, `adafruit_ht16k33`, and `neopixel`.
-   If using `circup`, run `circup install -r CIRCUITPY/lib/requirements.txt`
-   from this project folder after the Feather is mounted.
-4. Wire the hardware following `docs/wiring.md`.
-5. Run the bench tests in `docs/test-plan.md` before enclosing anything.
+Stationary captures also contained nonzero speed readings, motivating the
+software cutoff. They do not establish the GPS module's factory static-navigation
+threshold or a fixed delay before its filter activates. Startup measurements
+are timed from opening the host serial port; electrical power-on was not timestamped.
 
-The firmware is designed to be useful during bring-up: it shows `8888` and a
-blue sweep on boot, `----` plus an amber wave while waiting for GPS, speed
-(2-decimal mph) plus a fixed-rate rainbow comet once GPS data is available, a
-yellow pulse plus `----` if a fix goes stale/lost, and `Err` plus red flashing
-for caught application errors after hardware setup.
+Runtime of at least 90 minutes is a build acceptance target; no measured battery
+runtime is documented here. Final checks include readability while moving,
+strain relief, and battery clearance, as well as the electronics.

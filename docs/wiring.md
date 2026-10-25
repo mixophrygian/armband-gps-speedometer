@@ -1,191 +1,76 @@
-# Wiring Guide
+# Wiring
 
-## System Layout
+The Feather and display share a soldered proto hub. The GPS connects by STEMMA QT;
+the ten-pixel strip connects through a captive three-conductor cable. Disconnect
+USB and the LiPo before soldering or changing connections.
+
+## Connections
 
 ```text
-Pod, charged in place via USB-C
-+----------------------------------------------------+
-| GPS antenna up        7-segment display readable   |
-| Feather RP2040 + LiPo + perma-proto + DPDT switch  |
-| USB-C cutout + charge LED window                   |
-+--- hardwired 3-conductor cable (+, GND, data) -----+
-                     |  (continuous, no connector)
-Armband, semi-permanent LED
-+----------------------------------------------------+
-| lane 1: 10 pixels  ->                              |
-+----------------------------------------------------+
+LiPo <----> Feather battery connector / USB-C charger
+                  |
+                  +-- BAT -- DPDT pole B (ON) -------- LED +
+                  +-- GND --------------------------- LED GND
+                  +-- D6 --- 470 Ω ------------------- LED DIN
+                  +-- EN --- DPDT pole A (OFF) ------- GND
+                  |
+                  +-- 3V / GND / SDA / SCL --+-- display (0x70)
+                                           +-- GPS     (0x10)
+
+Optional 100 µF: LED + -- capacitor (+ to +, − to GND) -- LED GND
 ```
 
-> Note: this build **hardwires** the pod to the armband lane — three continuous
-> conductors (`+`, `GND`, data), no pod-to-armband connector. The pod is charged
-> **in place via USB-C** and never separates from the armband for daily use, so
-> the connector that earlier plans used (to unplug the pod for charging) was
-> dropped: fewer parts, fewer joints, and no non-locking connector to pop apart
-> on a kid's arm. The trade-off is that pod and armband are now one captive unit
-> — separating them later means desoldering. See `3d-printing-guide.md` for the
-> documented 3D-printed pod.
+The switch paths above close in opposite positions; see the pole table below.
+The battery stays connected to the charger in both positions.
 
-This build is a **single 10-pixel lane** — the armband only has room for about 10
-pixels at 60 LED/m. That removes the serpentine wiring and the lane-to-lane data
-joints the original four-lane plan needed. The firmware still keeps the lane
-scaffolding so it is one constant change away from multi-lane:
-
-```python
-LANE_COUNT = 1
-PIXELS_PER_LANE = 10
-LANE_REVERSED = (False,)   # single lane: no reversal
-```
-
-## I2C Devices
-
-Use the Feather RP2040's default I2C/STEMMA QT bus:
-
-| Device | Connection |
+| Connection | Route |
 | --- | --- |
-| 7-segment FeatherWing | Plugged into Feather headers; uses I2C address `0x70`. |
-| Mini GPS PA1010D | STEMMA QT cable to the same I2C bus. |
+| Display | FeatherWing male headers into Feather stacking-header sockets; default I²C bus, `0x70` |
+| GPS | Feather STEMMA QT connector; same I²C bus, `0x10` |
+| LED data | Feather `D6` → 470 Ω resistor on proto → strip `DIN`; `DOUT` unused |
+| LED power | Feather `BAT` → switch pole B → strip `+` |
+| LED ground | Feather `GND` → strip `GND` |
+| LiPo | Feather JST-PH battery connector; verify polarity electrically against board markings |
+| Charging | Feather USB-C; no battery disconnection needed |
 
-Mount the GPS with its ceramic patch antenna facing skyward. Do not place the
-display, LiPo, switch, or copper wiring over the GPS antenna.
+Feather stacking-header tails solder into the proto hub below it. Keep the
+display removable above it. Maintain separate nets for `BAT`, switched LED `+`,
+`GND`, `EN`, and the two sides of the data resistor. Check the proto's connected
+rows before placing the resistor or making rail connections.
 
-## Header Stack And Remaining Connections
+## DPDT power switch
 
-The display FeatherWing should not be soldered directly to the Feather. The
-intended stack is:
-
-```text
-7-segment FeatherWing with male headers
-        plugs into
-Feather stacking-header sockets
-        soldered to
-Feather RP2040 through-holes
-        with male tails available underneath
-```
-
-Those stacking-header tails are how the pod wiring gets access to Feather pins
-after the display is installed. The through-holes are occupied, but not lost;
-they now continue through the header pins.
-
-Use these connection sources:
-
-| Need | Connection source |
-| --- | --- |
-| LiPo battery | Feather JST-PH battery connector, not through-holes |
-| Charging | Feather USB-C connector |
-| GPS | Feather STEMMA QT connector, or `SDA`/`SCL` tails if the connector is blocked |
-| LED data | `D6` stacking-header tail to perma-proto resistor |
-| LED power | `BAT` stacking-header tail to DPDT switch/perma-proto |
-| LED ground | `GND` stacking-header tail to perma-proto |
-| Power switch | `EN` stacking-header tail to switch, then `GND` when off |
-
-For this build, the cleanest layout is usually a small perma-proto next to or under the
-Feather stack, with short wires from the accessible bottom tails. If you can make
-a tidy underside proto mount without blocking USB-C, the tails can also be
-soldered into that proto board.
-
-## Pod-To-Armband Cable (Hardwired, No Connector)
-
-The pod and the armband lane are joined by a **single hardwired 3-conductor
-cable** — no connector. Earlier plans used a JST-PH 6-pin pair so the pod could
-be unplugged for charging; charging now happens **in place via USB-C**, so that
-reason is gone and the connector was dropped. The result is fewer parts, half
-the solder joints, and no non-locking connector that can pop apart on a kid's
-arm.
-
-The three conductors:
-
-| Conductor | From (pod) | To (armband) |
-| --- | --- | --- |
-| LED `+` | Feather `BAT` via the DPDT switch | lane `+` pad |
-| LED data | Feather `D6` via the 470 ohm resistor | lane `DIN` pad |
-| LED `GND` | Feather `GND` | lane `GND` pad |
-
-Use 26-30 AWG silicone stranded wire with a consistent color convention (red
-`+`, black `GND`, a third color for data). Run all three as one bundled cable
-out of the pod to the lane.
-
-> Trade-off you've accepted: with no connector, pod and armband are one captive
-> unit. To separate them for service you desolder at the perma-proto. Leave a
-> little extra cable length (service slack) so the pod can open and the lid lift
-> without tugging the lane's solder joints — see `3d-printing-guide.md`.
-
-Strain relief still matters, just at different points: clamp the cable where it
-exits the pod (grommet) and immobilize it at the lane end so arm motion flexes
-the cable, never the solder pads.
-
-## NeoPixel Lane
-
-Use one 10-pixel cut from the BTF-LIGHTING WS2812B strip (Pure Gold Wire,
-60 LED/m, IP65). Only 10 pixels go into the build; the rest of the strip is
-practice scraps and spares.
-
-Data path:
-
-```text
-Feather D6
-  -> 470 ohm resistor (330 ohm works; 300-500 ohm acceptable)
-  -> hardwired data conductor
-  -> lane DIN -> lane DOUT (unused)
-```
-
-Power:
-
-```text
-Feather BAT -> DPDT switch -> hardwired + conductor -> LED lane +
-Feather GND ------------------------------------------> LED lane GND
-```
-
-A single lane needs no lane-to-lane chaining: `+`, `GND`, and data land on the
-one lane's DIN end and that's it. Keep the LED ground tied to Feather ground.
-
-Place the 100 uF capacitor **on the armband side**, across LED `+` and `GND`
-at or near the lane's DIN end. Observe capacitor polarity. (Earlier
-versions of this doc put the cap pod-side; armband-side is better practice
-because the cap's job is to absorb switching transients at the LED input, and
-a pod-side cap sees those transients only after the connector and cable have
-already dropped some of them. If you'd rather not put a cap on the armband
-for mechanical reasons, the pod-side placement still helps and is acceptable.)
-
-The NeoPixel guides recommend ~1000 uF, but this build uses **100 uF**
-intentionally: the strip is powered directly from a LiPo (no switching-supply
-turn-on spike to absorb) at a 0.12 brightness cap across only 10 pixels, so the
-transient current is tiny. 100 uF is more than ample here; parallel a second
-100 uF for ~200 uF if you ever raise the brightness or pixel count. Do not
-bother sourcing a 1000 uF part for this design.
-
-## DPDT Power Switch
-
-Use one DPDT switch so OFF disables both the Feather regulator and LED battery
-power while leaving the LiPo plugged into the Feather for USB-C charging.
-
-| Switch pole | Common lug | ON throw | OFF throw |
+| DPDT pole | Common lug | ON throw | OFF throw |
 | --- | --- | --- | --- |
-| Feather enable | Feather `EN` | Not connected | Feather `GND` |
-| LED power | LED `+` (hardwired conductor) | Feather `BAT` | Not connected |
+| A: regulator enable | Feather `EN` | Unconnected | Feather `GND` |
+| B: LED supply | LED `+` | Feather `BAT` | Unconnected |
 
-The Feather `EN` pin is pulled up internally. Grounding `EN` turns off the 3.3V
-regulator. The second pole prevents the LED strip from staying connected to the
-LiPo when the wearable is off.
+Identify each common and its throws with a continuity meter; do not infer them
+from lever direction. Both poles must produce the table's ON/OFF states together.
+Grounding `EN` disables the Feather's 3.3 V regulator. The second pole removes
+LED battery power. OFF leaves the battery/charger circuit connected, so unplug
+the battery as well as USB for hardware work.
 
-The LiPo stays plugged into the Feather JST-PH battery connector at all times.
-Charging happens through Feather USB-C. The enclosure needs a USB-C opening and
-a small window or light pipe for the charge status LED.
+## LED power and cable
 
-## Practical Wearable Notes
+Use 26 AWG silicone stranded wire, with red for switched `+`, black for `GND`,
+and a third color for data. The strip uses direct LiPo power and Feather 3.3 V
+data; initial firmware brightness is capped at `0.12`.
 
-- Never let the LiPo bend, crush, rub against solder joints, or sit under screw
-  heads.
-- Add a felt square between the battery and the Feather/perma-proto area so the
-  battery cannot rub on solder joints or header tails.
-- A small foam pad in the base can lift/support the stack for display-window
-  alignment, but it should not compress the LiPo or force the lid closed.
-- Cover exposed LED strip pads with heat shrink or flexible sealant.
-- Glue the LED strip to the armband, then add a sewn stretchy-fabric tether over
-  it so adhesive is not the only thing resisting sweat and flex.
-- Strain-relieve the hardwired cable where it exits the pod (clamp at the
-  grommet) and where it meets the lane, so arm motion flexes the cable, never
-  the solder pads. Leave a little service slack so the pod can open without
-  tugging joints.
-- Do not sharply bend the LED strip at solder pads. Let fabric/foam flex around
-  the strip segments.
-- Keep a common ground between Feather, GPS/display I2C, and LEDs.
+An optional 100 µF, 6.3 V-or-higher capacitor goes across switched LED `+` and
+`GND` near the strip's `DIN` end, with correct polarity and insulated leads.
+The prototype was operated without it. This value is a suggested addition,
+not a measured guarantee of supply stability; recheck operation if the strip,
+cable, brightness, or pixel count changes.
+
+Feed the cable through the enclosure before soldering its proto end. Anchor it
+at the pod exit and at the strip, leaving enough slack to lift the lid. The
+anchors must take a tug before the solder pads do. Insulate exposed pads and
+avoid sharp bends at joints. Final mechanical order and checks are in the
+[build guide](build.md#assembly).
+
+Mount the GPS outside the lid with its ceramic antenna facing skyward and clear
+of the display, wiring, and other hardware. Keep the battery insulated from
+header tails and solder joints. The current CAD has a USB opening but **no
+dedicated charge-indicator window**; check the Feather's charge LED with the
+lid open or provide a separate viewing opening/light pipe.

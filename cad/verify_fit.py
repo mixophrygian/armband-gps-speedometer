@@ -1,110 +1,194 @@
 #!/usr/bin/env python3
-"""Verify the enclosure fits; draw plan + side elevation. Mirrors enclosure.scad.
-Run: python3 cad/verify_fit.py
-This rev: Feather/display CENTRED on the proto (~+7,-1); switch points UP through
-the LID; GPS sits ON TOP of the lid (only a STEMMA cable hole passes through)."""
-import matplotlib; matplotlib.use("Agg")
+"""Check nominal bounds and draw an illustrative enclosure layout.
+
+Dimensions are read from enclosure.scad; this is not a collision solver or a
+full-size template. Internal component heights and external GPS placement are
+schematic. Run: python3 cad/verify_fit.py
+"""
 from pathlib import Path
+import re
+import shutil
+
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle, Circle, FancyBboxPatch
+from matplotlib.patches import Circle, FancyBboxPatch, Patch, Rectangle
 
-# ---- params (mirror enclosure.scad) ----
-inner_l, inner_w, inner_h = 71, 57, 36
-wall, floor, lid_th = 2.4, 2.4, 2.6
-stack_hang, stack_envelope, proto_below = 22.0, 27.0, 2.0
-proto = (0, 0, 64.62, 50.79)         # fills the box, centred
-stack = (-7, -4, 51, 23)             # display/Feather: flush-LEFT (USB left), slightly low
-disp_win = (-7, -4, 54, 24)          # window 4mm bigger than the display (2mm slop all round)
-batt = (0, 4, 62, 37); batt_h = 7.0
-switch_xy = (-22, 18); switch_body = (13, 12)   # toggle hangs from the lid (top-left)
-gps_cable = (25, -16); cable_d = 6
-usb_side = -1   # USB on the -X (left) wall
-switch_hole_r = 3.25
-outer_l, outer_w = inner_l+2*wall, inner_w+2*wall
-ear_r = 4.0; ear_x = outer_l/2 + ear_r - 2.0
-ear_pos = [(-ear_x, 12), (ear_x, -12)]
-half_l, half_w = inner_l/2, inner_w/2
-wall_top = floor + inner_h
-usb_y, usb_z = stack[1], wall_top - stack_hang + 3.2
+CAD_DIR = Path(__file__).resolve().parent
+INK, CORAL, BLUE, PURPLE, GREEN, ORANGE = (
+    "#25303b", "#cd4e4e", "#2876a8", "#8054a5", "#347b47", "#bd650c"
+)
 
-def bnds(c): x,y,l,w=c; return (x-l/2, x+l/2, y-w/2, y+w/2)
-def overlap(a,b):
-    ax0,ax1,ay0,ay1=bnds(a); bx0,bx1,by0,by1=bnds(b)
-    return (max(0,min(ax1,bx1)-max(ax0,bx0)), max(0,min(ay1,by1)-max(ay0,by0)))
-def inside(c, clr=0.5):
-    x0,x1,y0,y1=bnds(c)
-    return (x0>=-half_l+clr and x1<=half_l-clr and y0>=-half_w+clr and y1<=half_w-clr),(x0,x1,y0,y1)
 
-problems, notes, info = [], [], []
-v = inner_h - stack_envelope - proto_below - batt_h
-clearance_note = f"Vertical clearance battery->proto = {v:.1f}mm (assumes trimmed tails)"
-if v < 0:
-    problems.append(clearance_note)
-elif v < 2:
-    notes.append(clearance_note + " - tight; dry-fit before final assembly")
-else:
-    notes.append(clearance_note)
-for c,n in [(proto,"proto"),(stack,"display/Feather"),(batt,"battery")]:
-    ok,b = inside(c)
-    (notes if ok else problems).append(f"{n} {'fits' if ok else 'OUT OF BOUNDS'} (x {b[0]:.1f}..{b[1]:.1f}, y {b[2]:.1f}..{b[3]:.1f})")
-sb = (switch_xy[0], switch_xy[1], switch_body[0], switch_body[1])
-ox,oy = overlap(sb, stack)
-(problems if (ox>0 and oy>0) else notes).append(
-    "switch body vs Feather: " + (f"OVERLAP {ox:.1f}x{oy:.1f} - raise switch_y" if (ox>0 and oy>0)
-    else "clear (body hangs over the proto, not the Feather)"))
-info.append("GPS is EXTERNAL on top of the lid - only its STEMMA cable hole passes through.")
-info.append(f"USB-C on the -X (LEFT) wall at z={usb_z:.0f}mm, y={usb_y:.0f}; LED grommet on the +X (right) wall; ears offset to clear both.")
+def dimensions():
+    """Read the numeric inputs used here; fail if an input becomes an expression."""
+    source = re.sub(r"//[^\n]*", "", (CAD_DIR / "enclosure.scad").read_text())
+    names = """inner_l inner_w inner_h wall floor lid_th corner_r stack_hang
+        stack_envelope proto_l proto_w stack_x stack_y feather_l feather_w
+        disp_pkg_l disp_pkg_w disp_lip batt_x batt_y batt_l batt_w batt_h
+        switch_x switch_y switch_hole_d gps_cable_x gps_cable_y gps_cable_d
+        gps_pcb_l gps_pcb_w usb_w usb_h grommet_y grommet_z grommet_d
+        ear_r ear_overlap rail_t""".split()
+    d = {}
+    for name in names:
+        match = re.search(rf"\b{re.escape(name)}\s*=\s*(-?\d+(?:\.\d+)?)\s*;", source)
+        if match is None:
+            raise ValueError(f"Expected a numeric {name} in enclosure.scad")
+        d[name] = float(match.group(1))
+    d["outer_l"] = d["inner_l"] + 2 * d["wall"]
+    d["outer_w"] = d["inner_w"] + 2 * d["wall"]
+    d["wall_top"] = d["floor"] + d["inner_h"]
+    d["height"] = d["wall_top"] + d["lid_th"]
+    d["ear_x"] = d["outer_l"] / 2 + d["ear_r"] - d["ear_overlap"]
+    d["plate_l"] = 2 * (d["ear_x"] + d["ear_r"])
+    d["plate_w"] = d["outer_w"] + 2 * (d["rail_t"] + 1.5)
+    d["usb_z"] = d["wall_top"] - d["stack_hang"] + 3.2
+    return d
 
-print("="*64); print("ENCLOSURE FIT CHECK (Feather centred / switch + GPS on lid)"); print("="*64)
-print(f"External {outer_l:.1f} x {outer_w:.1f} x {floor+inner_h+lid_th:.1f} mm   cavity {inner_l}x{inner_w}x{inner_h}\n")
-print("OK / notes:"); [print("  -",n) for n in notes]
-print("\nINFO:"); [print("  *",i) for i in info]
-print("\nPROBLEMS: none" if not problems else "\nPROBLEMS:"); [print("  !",p) for p in problems]
 
-# ---- draw ----
-fig,(axp,axs) = plt.subplots(1,2,figsize=(13,6))
-axp.set_aspect("equal")
-pl_l, pl_w = 2*(ear_x+ear_r), outer_w+2*(2+1.5)
-axp.add_patch(FancyBboxPatch((-pl_l/2,-pl_w/2),pl_l,pl_w,boxstyle="round,pad=0,rounding_size=6",fill=False,edgecolor="#8c564b",ls="--",lw=1.4,zorder=1))
-axp.add_patch(FancyBboxPatch((-outer_l/2,-outer_w/2),outer_l,outer_w,boxstyle="round,pad=0,rounding_size=6",fill=False,edgecolor="black",lw=2))
-axp.add_patch(Rectangle((-half_l,-half_w),inner_l,inner_w,fill=False,edgecolor="gray",ls=":",lw=1))
-def draw(c,ec,fc,label,ls="-",a=0.15):
-    x,y,l,w=c
-    if fc: axp.add_patch(Rectangle((x-l/2,y-w/2),l,w,facecolor=fc,edgecolor="none",alpha=a,zorder=2))
-    axp.add_patch(Rectangle((x-l/2,y-w/2),l,w,fill=False,edgecolor=ec,lw=1.4,ls=ls,zorder=3))
-    if label: axp.text(x,y,label,ha="center",va="center",fontsize=7,zorder=5)
-draw(proto,"#9467bd","#9467bd","proto (under)",ls="-.",a=0.07)
-draw(batt,"#1f77b4","#1f77b4","battery (floor)",ls="--",a=0.10)
-draw(stack,"#d62728","#d62728","DISPLAY / FEATHER",a=0.18)
-draw(disp_win,"#d62728",None,"",ls=":")
-axp.add_patch(Circle(switch_xy,switch_hole_r,facecolor="none",edgecolor="#ff7f0e",lw=2,zorder=4))
-axp.add_patch(Rectangle((switch_xy[0]-switch_body[0]/2,switch_xy[1]-switch_body[1]/2),switch_body[0],switch_body[1],fill=False,edgecolor="#ff7f0e",ls=":",lw=1,zorder=3))
-axp.text(switch_xy[0],switch_xy[1]+8,"switch (up thru lid)",ha="center",fontsize=6,color="#cc6600")
-gps_body = (22, 21, 25.5, 25.4)   # GPS glued on top, top-right (external), above the display
-axp.add_patch(Rectangle((gps_body[0]-gps_body[2]/2,gps_body[1]-gps_body[3]/2),gps_body[2],gps_body[3],fill=False,edgecolor="#2ca02c",ls="--",lw=1.2,zorder=2))
-axp.text(gps_body[0],gps_body[1],"GPS\n(glued on top)",ha="center",va="center",fontsize=6,color="#2ca02c",zorder=5)
-axp.plot([gps_body[0],gps_cable[0]],[gps_body[1]-gps_body[3]/2,gps_cable[1]],color="#2ca02c",ls=":",lw=1,zorder=3)
-axp.add_patch(Circle(gps_cable,cable_d/2,facecolor="#2ca02c",edgecolor="k",zorder=4))
-axp.text(gps_cable[0]+8,gps_cable[1],"cable hole",ha="center",fontsize=6,color="#2ca02c")
-axp.add_patch(Rectangle((-outer_l/2-2,usb_y-5.5),3,11,facecolor="#b00",edgecolor="k",zorder=4))
-axp.text(-outer_l/2-4,usb_y,"USB",fontsize=6,color="#b00",va="center",ha="right")
-for (ex,ey) in ear_pos: axp.add_patch(Circle((ex,ey),ear_r,facecolor="#9e9e9e",edgecolor="k",zorder=4))
-axp.set_xlim(-pl_l/2-12,pl_l/2+16); axp.set_ylim(-pl_w/2-10,pl_w/2+12)
-axp.set_title(f"Plan (top view) — pod {outer_l:.0f}x{outer_w:.0f}, plate {pl_l:.0f}x{pl_w:.0f} mm",fontsize=9.5)
-axp.axis("off")
+def check_fit(d):
+    print("NOMINAL ENCLOSURE CHECK — physical dry-fit required")
+    print(f"Seated shell: {d['outer_l']:.1f} × {d['outer_w']:.1f} × {d['height']:g} mm")
+    print("Excludes ears, baseplate, external GPS and switch lever.")
+    for name, x, y, length, width in [
+        ("proto hub", 0, 0, d["proto_l"], d["proto_w"]),
+        ("Feather", d["stack_x"], d["stack_y"], d["feather_l"], d["feather_w"]),
+        ("battery", d["batt_x"], d["batt_y"], d["batt_l"], d["batt_w"]),
+    ]:
+        margin = min(d["inner_l"] / 2 - abs(x) - length / 2,
+                     d["inner_w"] / 2 - abs(y) - width / 2)
+        print(f"{name}: {'WITHIN' if margin >= 0 else 'OUTSIDE'} rectangular cavity; "
+              f"minimum edge margin {margin:g} mm")
+    clearance = d["inner_h"] - d["stack_envelope"] - d["batt_h"]
+    print(f"Battery-to-tail clearance: {clearance:g} mm BEFORE any hub, solder, "
+          "insulation or wiring below the tail tips.")
+    if clearance < 2:
+        print("WARNING: nominal clearance below 2 mm; measure the complete assembly.")
+    print(f"USB: -X wall, {d['usb_w']:g} × {d['usb_h']:g} mm opening, "
+          f"centre y={d['stack_y']:g}, z={d['usb_z']:g} mm.")
+    print(f"Switch: {d['switch_hole_d']:g} mm lid hole; confirm body and terminals.")
+    print("GPS: external; CAD defines only the cable hole, not board position or screws.")
+    print("Unchecked: rounded corners, lid lip, optional mounts, wiring and fasteners.")
 
-axs.set_aspect("equal")
-top = wall_top
-axs.add_patch(Rectangle((-outer_l/2,0),outer_l,floor+inner_h+lid_th,fill=False,edgecolor="black",lw=2))
-axs.add_patch(Rectangle((-batt[2]/2,floor),batt[2],batt_h,facecolor="#1f77b4",edgecolor="k",alpha=0.5)); axs.text(0,floor+batt_h/2,"battery",ha="center",va="center",fontsize=7)
-pb = floor+batt_h+2
-axs.add_patch(Rectangle((-proto[2]/2,pb),proto[2],1.6,facecolor="#9467bd",edgecolor="k",alpha=0.6)); axs.text(0,pb+3,"proto",ha="center",fontsize=6)
-axs.add_patch(Rectangle((-outer_l/2,top),outer_l,lid_th,facecolor="#b0c4de",edgecolor="k"))
-axs.add_patch(Rectangle((stack[0]-25,top-8),50,8,facecolor="#d62728",edgecolor="k",alpha=0.5)); axs.text(stack[0],top-4,"display",ha="center",fontsize=6)
-fz = top-stack_hang
-axs.add_patch(Rectangle((stack[0]-25.5,fz),51,1.6,facecolor="#888",edgecolor="k")); axs.text(stack[0],fz+2.6,"Feather",ha="center",fontsize=6)
-axs.add_patch(Rectangle((-outer_l/2-1.5,usb_z-3),3,6,facecolor="none",edgecolor="#b00",lw=2)); axs.annotate(f"USB z={usb_z:.0f}",xy=(-outer_l/2-4,usb_z),fontsize=7,color="#b00",va="center",ha="right")
-axs.set_xlim(-outer_l/2-22,outer_l/2+8); axs.set_ylim(-3,top+lid_th+6)
-axs.set_title(f"Side elevation — height {floor+inner_h+lid_th:.0f} mm",fontsize=9.5); axs.axis("off")
-out = Path(__file__).with_name("enclosure_plan.png")
-plt.tight_layout(); plt.savefig(out,dpi=130,bbox_inches="tight"); print(f"\nSaved {out}")
+
+def render_plan(out, *, large=False):
+    d = dimensions()
+    fig, (plan, side) = plt.subplots(1, 2, figsize=(14, 7.3) if large else (12, 6.5))
+    fig.subplots_adjust(left=0.025, right=0.985, bottom=0.18, top=0.82, wspace=0.07)
+    fs = 11 if large else 9
+    for ax in (plan, side):
+        ax.set_aspect("equal")
+        ax.axis("off")
+    fig.suptitle("Armband speedometer enclosure", fontsize=20 if large else 17,
+                 fontweight="bold", color=INK, y=0.96)
+    fig.text(0.5, 0.90,
+             f"Seated shell {d['outer_l']:.1f} × {d['outer_w']:.1f} × {d['height']:g} mm"
+             "  ·  excludes ears, baseplate, GPS and switch lever",
+             ha="center", fontsize=fs, color=INK)
+
+    def rect(ax, x, y, length, width, color, *, fill=True, ls="-", alpha=0.15):
+        if fill:
+            ax.add_patch(Rectangle((x-length/2, y-width/2), length, width,
+                                   facecolor=color, edgecolor="none", alpha=alpha))
+        ax.add_patch(Rectangle((x-length/2, y-width/2), length, width,
+                               fill=False, edgecolor=color, lw=1.5, ls=ls))
+
+    def label(ax, x, y, text, color=INK, **kwargs):
+        ax.text(x, y, text, color=color, fontsize=fs, ha="center", va="center", **kwargs)
+
+    # Plan: CAD shell and cutout dimensions; GPS placement is illustrative.
+    for length, width, color, ls in [
+        (d["plate_l"], d["plate_w"], "#957454", "--"),
+        (d["outer_l"], d["outer_w"], INK, "-"),
+    ]:
+        plan.add_patch(FancyBboxPatch((-length/2, -width/2), length, width,
+            boxstyle=f"round,pad=0,rounding_size={d['corner_r']}",
+            fill=False, edgecolor=color, ls=ls, lw=1.7))
+    rect(plan, 0, 0, d["inner_l"], d["inner_w"], "#a0a0a0", fill=False, ls=":")
+    rect(plan, 0, 0, d["proto_l"], d["proto_w"], PURPLE, ls="-.", alpha=0.06)
+    rect(plan, d["batt_x"], d["batt_y"], d["batt_l"], d["batt_w"], BLUE, ls="--", alpha=0.06)
+    rect(plan, d["stack_x"], d["stack_y"], d["feather_l"], d["feather_w"], CORAL)
+    rect(plan, d["stack_x"], d["stack_y"], d["disp_pkg_l"]-2*d["disp_lip"],
+         d["disp_pkg_w"]-2*d["disp_lip"], CORAL, fill=False, ls=":")
+    label(plan, d["stack_x"], d["stack_y"]+2, "display / Feather")
+    label(plan, d["stack_x"], d["stack_y"]-4, "hub + battery below", "#606060")
+    plan.add_patch(Circle((d["switch_x"], d["switch_y"]), d["switch_hole_d"]/2,
+                         fill=False, edgecolor=ORANGE, lw=2))
+    label(plan, d["switch_x"], d["switch_y"]+8, "switch", ORANGE)
+    gps_x, gps_y = 22, 21  # illustrative only; not a mounting location from CAD
+    rect(plan, gps_x, gps_y, d["gps_pcb_l"], d["gps_pcb_w"], GREEN, ls="--")
+    label(plan, gps_x, gps_y, "GPS\nexternal", GREEN)
+    plan.plot([gps_x, d["gps_cable_x"]], [gps_y-d["gps_pcb_w"]/2, d["gps_cable_y"]],
+              color=GREEN, ls=":", lw=1.3)
+    plan.add_patch(Circle((d["gps_cable_x"], d["gps_cable_y"]), d["gps_cable_d"]/2,
+                         facecolor="white", edgecolor=GREEN, lw=1.7))
+    plan.annotate("GPS cable", xy=(d["gps_cable_x"], d["gps_cable_y"]),
+                  xytext=(27, -26), ha="center", fontsize=fs, color=GREEN,
+                  arrowprops={"arrowstyle": "-", "color": GREEN})
+    rect(plan, -d["outer_l"]/2, d["stack_y"], d["wall"], d["usb_w"], CORAL, alpha=0.4)
+    label(plan, -d["outer_l"]/2-9, d["stack_y"], "USB", CORAL)
+    rect(plan, d["outer_l"]/2, d["grommet_y"], d["wall"], d["grommet_d"], INK, alpha=0.2)
+    plan.plot([d["outer_l"]/2+2, 51], [d["grommet_y"]]*2, color=INK)
+    label(plan, 48, d["grommet_y"]+7, "LED\nwires")
+    for x, y in [(-d["ear_x"], 12), (d["ear_x"], -12)]:
+        plan.add_patch(Circle((x, y), d["ear_r"], facecolor="#c7c7c7", edgecolor=INK))
+    label(plan, 0, -42, f"Baseplate {d['plate_l']:.1f} × {d['plate_w']:.1f} mm", "#806044")
+    plan.set_xlim(-54, 58)
+    plan.set_ylim(-48, 43)
+    plan.set_title("Plan · looking down at the lid", fontsize=fs+2, loc="left", color=INK)
+
+    # X-Z projection: component bodies are schematic, not measured cross-sections.
+    top = d["wall_top"]
+    rect(side, 0, d["height"]/2, d["outer_l"], d["height"], INK, fill=False)
+    rect(side, 0, top+d["lid_th"]/2, d["outer_l"], d["lid_th"], "#728ca1", alpha=0.25)
+    rect(side, d["batt_x"], d["floor"]+d["batt_h"]/2, d["batt_l"], d["batt_h"], BLUE, alpha=0.3)
+    label(side, d["batt_x"], d["floor"]+d["batt_h"]/2, "LiPo", BLUE)
+    proto_z = top-d["stack_envelope"]  # indicative position; actual hub may extend lower
+    rect(side, 0, proto_z+0.8, d["proto_l"], 1.6, PURPLE, alpha=0.5)
+    side.annotate("proto hub", xy=(27, proto_z+1.6), xytext=(28, 18),
+                  ha="center", fontsize=fs, color=PURPLE,
+                  arrowprops={"arrowstyle": "-", "color": PURPLE})
+    feather_z = top-d["stack_hang"]
+    rect(side, d["stack_x"], feather_z+0.8, d["feather_l"], 1.6, "#62686f", alpha=0.5)
+    label(side, d["stack_x"]-1, feather_z+5, "Feather")
+    rect(side, d["stack_x"], top-4, d["disp_pkg_l"], 8, CORAL, alpha=0.4)
+    label(side, d["stack_x"], top-4, "display", CORAL)
+    rect(side, d["switch_x"], top-5, 13, 10, ORANGE, fill=False, ls=":")
+    side.plot([d["switch_x"]]*2, [d["height"], d["height"]+7], color=ORANGE, lw=3)
+    label(side, d["switch_x"]-3, d["height"]+12, "switch", ORANGE)
+    rect(side, gps_x, d["height"]+4.1, d["gps_pcb_l"], 8.2, GREEN, alpha=0.2)
+    label(side, gps_x, d["height"]+4.1, "GPS", GREEN)
+    rect(side, -d["outer_l"]/2, d["usb_z"], d["wall"], d["usb_h"], CORAL, fill=False)
+    label(side, -d["outer_l"]/2-9, d["usb_z"], "USB", CORAL)
+    rect(side, d["outer_l"]/2, d["grommet_z"], d["wall"], d["grommet_d"], INK, fill=False)
+    side.plot([d["outer_l"]/2+2, 51], [d["grommet_z"]]*2, color=INK)
+    label(side, 48, d["grommet_z"]+7, "LED\nwires")
+    label(side, 0, -7, "Baseplate omitted from this view", "#606060")
+    side.set_xlim(-54, 58)
+    side.set_ylim(-13, 68)
+    side.set_title("Side projection · component heights schematic", fontsize=fs+2, loc="left", color=INK)
+
+    fig.legend(handles=[Patch(facecolor=color, alpha=0.4, label=label_text) for color, label_text in
+               [(BLUE, "Battery"), (PURPLE, "Wiring hub"), (CORAL, "Display / USB"),
+                (GREEN, "External GPS"), (ORANGE, "Switch")]],
+               loc="lower center", bbox_to_anchor=(0.5, 0.065), ncol=5,
+               frameon=False, fontsize=fs)
+    fig.text(0.5, 0.025,
+             "Illustrative layout, not a scale template. GPS position, component bodies and wiring require a physical dry-fit.",
+             ha="center", color="#606060", fontsize=fs)
+    fig.savefig(out, dpi=200 if large else 150, facecolor="white", bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved {out}")
+
+
+def main():
+    check_fit(dimensions())
+    out = CAD_DIR / "enclosure_plan.png"
+    render_plan(out)
+    root_copy = CAD_DIR.parent / "enclosure_plan.png"
+    shutil.copyfile(out, root_copy)
+    print(f"Updated compatibility copy {root_copy}")
+
+
+if __name__ == "__main__":
+    main()
